@@ -1,0 +1,177 @@
+Você é um especialista em desenvolvimento de Micro-SaaS simples, funcional e intuitivo, focado em empreendedores iniciantes de salgados assados (público 20–55 anos, maioria mulheres +35, com baixa experiência digital).
+
+Sua missão é criar um sistema SaaS local (IndexedDB), com design acessível e interface clara, resolvendo as dores principais do público: precificação, custos, estoque, leads, vendas e rotina de produção.
+
+1. Identidade Visual
+
+Cores principais: Vermelho (#D62828) e Dourado (#FFD700) (associados a comida, calor e lucro).
+
+Cores secundárias: Branco (#FFFFFF) e Cinza claro (#F5F5F5) para contraste.
+
+Layout: Ícones grandes, botões arredondados, textos curtos e legíveis.
+
+Fonte: Sans-serif clara (Ex: Poppins ou Open Sans).
+
+Estilo: Simples, sem poluição visual, inspirado em apps de delivery.
+
+2. Estrutura do SaaS
+Tela Inicial – Dashboard
+
+Resumo visual com cards grandes:
+
+Custos Totais
+
+Vendas Registradas
+
+Lucro Estimado
+
+Pedidos Ativos
+
+Botão “+ Novo Registro” centralizado (atalho rápido).
+
+Módulo 1 – Precificação (CMV e Margem)
+
+Calculadora de preço por receita/unidade.
+
+Inputs:
+
+Nome da receita
+
+Custo de insumos
+
+Rendimento (quantidade produzida)
+
+Margem desejada (%)
+
+Saídas:
+
+Preço sugerido de venda (por unidade e por kit)
+
+Lucro por unidade e por lote.
+
+Botão de Salvar Receita no IndexedDB.
+
+Módulo 2 – Controle de Estoque
+
+Cadastro de insumos:
+
+Nome, quantidade, validade, preço por Kg/unidade.
+
+Alertas automáticos:
+
+"Produto próximo do vencimento"
+
+"Estoque baixo"
+
+Relatório rápido: quanto insumo gasto vs. quanto restou.
+
+Módulo 3 – Gestão de Leads e Vendas
+
+Registro simples de clientes:
+
+Nome, WhatsApp, preferências.
+
+Registro de pedidos:
+
+Produto/kit, quantidade, valor total, status (pago/pendente/entregue).
+
+Exportar lista de clientes em .csv para WhatsApp Business.
+
+Módulo 4 – Relatórios Rápidos
+
+Tela com gráficos simples:
+
+“Quanto gastei”
+
+“Quanto vendi”
+
+“Quanto lucrei”
+
+Comparativo semanal/mensal (barras ou pizza).
+
+Exportar relatório em PDF.
+
+Módulo 5 – Rotina de Produção
+
+Checklist configurável:
+
+Dia 1: Preparar massa
+
+Dia 2: Montar recheios e congelar
+
+Dia 3: Assar e embalar
+
+Tabela pronta com tempo de congelamento e validade por produto.
+
+3. Banco de Dados (IndexedDB)
+Estrutura de Tabelas
+{
+  "receitas": {
+    "id": "auto",
+    "nome": "string",
+    "custoInsumos": "number",
+    "rendimento": "number",
+    "margem": "number",
+    "precoSugerido": "number",
+    "lucroUnidade": "number"
+  },
+  "estoque": {
+    "id": "auto",
+    "nome": "string",
+    "quantidade": "number",
+    "validade": "date",
+    "custoPorUnidade": "number"
+  },
+  "clientes": {
+    "id": "auto",
+    "nome": "string",
+    "whatsapp": "string",
+    "observacoes": "string"
+  },
+  "pedidos": {
+    "id": "auto",
+    "clienteId": "number",
+    "produto": "string",
+    "quantidade": "number",
+    "valorTotal": "number",
+    "status": "string"
+  },
+  "relatorios": {
+    "id": "auto",
+    "data": "date",
+    "gastos": "number",
+    "vendas": "number",
+    "lucro": "number"
+  }
+}
+
+4. Requisitos de Usabilidade
+
+Botões grandes e coloridos (“Cadastrar”, “Salvar”, “Gerar Relatório”).
+
+Textos simples, sem termos técnicos (usar “Lucro” em vez de “Margem Bruta”).
+
+Sem necessidade de login/servidor → tudo salvo localmente no IndexedDB.
+
+Responsivo, funcionando bem em celulares básicos.
+
+5. Diferenciais do SaaS
+
+Resolve de forma prática:
+
+Precificação → evita prejuízo.
+
+Estoque com validade → reduz desperdício.
+
+Leads + vendas → ajuda a vender mais pelo WhatsApp.
+
+Rotina de produção pronta → organiza trabalho.
+
+Linguagem e design pensados para pessoas sem experiência digital.
+
+Interface enxuta, sem distrações.
+
+👉 Instrução final para IA:
+Crie este Micro-SaaS exatamente com base nesta estrutura.
+Utilize IndexedDB para persistência local, interface minimalista com cores quentes e botões grandes, e fluxos simples que guiem o usuário passo a passo.
+Priorize funcionalidade sobre estética complexa: menos é mais.
