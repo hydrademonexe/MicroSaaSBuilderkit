@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { database } from '@/lib/database';
-import { Recipe, Ingredient, Customer, Order, DailyReport, ProductionTask, Alert } from '@/types';
+import { Recipe, Ingredient, Customer, Order, Product, ProductionTask, Alert } from '@/types';
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -21,7 +21,7 @@ export function useRecipes() {
     loadRecipes();
   }, []);
 
-  const addRecipe = async (recipe: Omit<Recipe, 'id' | 'createdAt'>) => {
+  const addRecipe = async (recipe: Omit<Recipe, 'id' | 'dataAtualizacao'>) => {
     try {
       const newRecipe = await database.saveRecipe(recipe);
       setRecipes(prev => [...prev, newRecipe]);
@@ -43,6 +43,59 @@ export function useRecipes() {
   };
 
   return { recipes, loading, addRecipe, deleteRecipe, reload: loadRecipes };
+}
+
+export function useProducts() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadProducts = async () => {
+    try {
+      const data = await database.getProducts();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const addProduct = async (product: Omit<Product, 'id' | 'createdAt'>) => {
+    try {
+      const newProduct = await database.saveProduct(product);
+      setProducts(prev => [...prev, newProduct]);
+      return newProduct;
+    } catch (error) {
+      console.error('Error adding product:', error);
+      throw error;
+    }
+  };
+
+  const updateProduct = async (product: Product) => {
+    try {
+      await database.updateProduct(product);
+      setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    try {
+      await database.deleteProduct(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+  };
+
+  return { products, loading, addProduct, updateProduct, deleteProduct, reload: loadProducts };
 }
 
 export function useIngredients() {
@@ -201,7 +254,18 @@ export function useOrders() {
     }
   };
 
-  return { orders, loading, addOrder, updateOrder, deleteOrder, reload: loadOrders };
+  const processPayment = async (orderId: string) => {
+    try {
+      await database.processOrderPayment(orderId);
+      // Reload orders to get updated status
+      await loadOrders();
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      throw error;
+    }
+  };
+
+  return { orders, loading, addOrder, updateOrder, deleteOrder, processPayment, reload: loadOrders };
 }
 
 export function useAlerts() {
@@ -235,28 +299,6 @@ export function useAlerts() {
   };
 
   return { alerts, loading, markAsRead, reload: loadAlerts };
-}
-
-export function useReports() {
-  const [reports, setReports] = useState<DailyReport[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadReports = async () => {
-    try {
-      const data = await database.getReports();
-      setReports(data);
-    } catch (error) {
-      console.error('Error loading reports:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  return { reports, loading, reload: loadReports };
 }
 
 export function useProductionTasks() {
@@ -299,5 +341,15 @@ export function useProductionTasks() {
     }
   };
 
-  return { tasks, loading, updateTask, addTask, reload: loadTasks };
+  const deleteTask = async (id: string) => {
+    try {
+      await database.deleteProductionTask(id);
+      setTasks(prev => prev.filter(t => t.id !== id));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  };
+
+  return { tasks, loading, updateTask, addTask, deleteTask, reload: loadTasks };
 }

@@ -1,0 +1,223 @@
+Correções e melhorias funcionais em Clientes, Pedidos, Precificação, Relatórios, Dashboard e Produtos/Estoque, mantendo IndexedDB como armazenamento local. Interface simples, legível e mobile-first para público +35.
+
+1) Clientes
+
+Adicionar campos e máscaras:
+
+Campos: nome (obrig.), whatsapp (obrig.), endereco.logradouro, endereco.numero, endereco.bairro, endereco.cidade, endereco.uf, endereco.cep, observacoes.
+
+Máscara WhatsApp (BR): (00) 00000-0000 (aceitar 10 ou 11 dígitos; salvar só dígitos no DB; exibir sempre formatado).
+
+Máscara CEP: 00000-000 (opcional).
+
+Validação: impedir salvar se nome vazio ou whatsapp inválido.
+
+Notificações:
+
+Toda criação/edição/remoção exibe toast no canto inferior, que some sozinho após 5s (e botão “x” para fechar antes).
+
+2) Produtos & Estoque (NOVO MÓDULO CONECTADO)
+
+Criar “Produtos” e integrar com “Estoque”:
+
+Produtos (catálogo): id, nome (obrig.), sku (único opcional), descricao, precoBase (BRL), ativo (bool).
+
+Vincular a estoque: cada produto pode consumir insumos (opcional) → usar lista de insumos com quantidades padrão por unidade/lote.
+
+Estoque (insumos): já existente; manter e permitir alertas (validade baixa/quantidade baixa).
+
+UI:
+
+Lista com busca, botão “+ Produto”, edição inline simples.
+
+Em produto, guia “Composição” para mapear insumos (opcional). Se usado, permitir baixa automática de estoque ao confirmar venda.
+
+Persistência: tudo em IndexedDB.
+
+3) Pedidos
+
+Campos atuais: Cliente, Produto, Quantidade, Valor Total, Status.
+Alterar para:
+
+Cliente (obrig.) — select de clientes.
+
+Itens do pedido (múltiplos): botão “Adicionar item”.
+
+Item = produtoId (select de Produtos cadastrados), quantidade, precoUnit (auto do produto, editável), subtotal calculado.
+
+Taxas opcionais: taxaEntrega e taxaServico (entradas monetárias com máscara “R$ 0,00”).
+
+Resumo automático: subtotalItens + taxaEntrega + taxaServico = valorTotal.
+
+Status: rascunho, pendente, pago, entregue, cancelado.
+
+Ao mudar para “pago”: se produto tiver composição → baixar estoque proporcional (quantidade * insumos/unidade). Logar movimento.
+
+Máscaras e formatos:
+
+Todos os campos monetários com formatação BRL em tempo real (exibição), armazenando centavos como number (ex.: 1090 = R$10,90) ou number ponto-flutuante com arredondamento fixo. Exibição com Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).
+
+Notificação: “Pedido salvo/atualizado” → toast 5s.
+
+4) Precificação (CMV/Margem)
+
+Correções:
+
+Campo “Custos dos ingredientes” deve exibir prefixo BRL e aceitar apenas números; no DB gravar número; na UI exibir “R$ 10,00”.
+
+Margem desejada (%):
+
+Tratar valores 0–95% normalmente.
+
+Entre 95% e 300%, permitir mas mostrar aviso: “Margem muito alta pode distorcer preço”.
+
+Acima de 300%: bloquear com erro amigável.
+
+Fórmulas:
+
+custoUnit = custoIngredientes / rendimento
+
+precoSugerido = custoUnit * (1 + margem/100)
+
+lucroUnit = precoSugerido - custoUnit
+
+Arredondamento: 2 casas decimais; evitar “números aleatórios” usando toFixed(2) antes de exibir.
+
+Salvar receita preenche: nome, custoIngredientes, rendimento, margem, precoSugerido, lucroUnit, dataAtualizacao.
+
+5) Relatórios Rápidos
+
+Bug: “mesmo após confirmar a venda não mostrou nada”.
+Corrigir origem de dados:
+
+Relatório deve agregar apenas pedidos com status = "pago" (ou entregue).
+
+Gastos (CMV):
+
+Se pedido tiver produtos com composição → somar (custo insumo * qtd consumida).
+
+Caso não haja composição → permitir campo “custo estimado (%)” global (ex.: 35%) para estimar CMV enquanto usuário não cadastra insumos.
+
+Vendas: soma valorTotal dos pedidos pagos.
+
+Lucro: vendas - gastos.
+
+Exibir filtros: período (mês atual, semana, personalizado).
+
+Exportar CSV/PDF (opcional).
+
+6) Dashboard
+
+Corrigir cálculos:
+
+Vendas (período atual) = soma de valorTotal de pedidos pagos/entregues no período selecionado.
+
+Custos Totais = CMV calculado (ver regra de relatórios).
+
+Lucro = Vendas - Custos.
+
+Pedidos ativos = contagem de pendente + pago não entregue.
+
+Não “inventar” números: sempre derivar do DB.
+
+7) IndexedDB — Esquema final
+
+Database name: lucroAssadoDB (versão ↑ se já existir; fazer migração).
+
+Object stores & indexes:
+
+clientes (keyPath: id, autoIncrement)
+
+campos: nome, whatsapp (somente dígitos), endereco {logradouro, numero, bairro, cidade, uf, cep}, observacoes, createdAt
+
+index: by_nome, by_whatsapp
+
+produtos (keyPath: id, autoIncrement)
+
+campos: nome, sku, descricao, precoBase, ativo, composicao [{insumoId, quantidadePorUnidade}]
+
+index: by_nome, by_sku, by_ativo
+
+insumos (estoque) (keyPath: id, autoIncrement)
+
+campos: nome, quantidade, unidade (kg/g/ml/un), validade (ISO), custoPorUnidade, alertaMinimo
+
+index: by_nome, by_validade
+
+pedidos (keyPath: id, autoIncrement)
+
+campos: clienteId, itens [{produtoId, quantidade, precoUnit, subtotal}], taxaEntrega, taxaServico, valorTotal, status, createdAt, paidAt, deliveredAt
+
+index: by_status, by_clienteId, by_createdAt, by_paidAt
+
+receitas (keyPath: id, autoIncrement)
+
+campos: nome, custoIngredientes, rendimento, margem, precoSugerido, lucroUnit, dataAtualizacao
+
+index: by_nome
+
+movimentosEstoque (keyPath: id, autoIncrement)
+
+campos: tipo (baixa|entrada), referencia (pedidoId|ajuste), itens [{insumoId, quantidade}], createdAt
+
+index: by_tipo, by_createdAt
+
+config (keyPath: key)
+
+ex.: { key: 'cmvEstimadoPercent', value: 35 }
+
+Migração: no onupgradeneeded, criar lojas ausentes e índices; se já existirem, não destruir dados. Mover estoque antigo para insumos se necessário.
+
+8) UX para +35
+
+Campos grandes, labels sempre visíveis, placeholders claros.
+
+Botões principais: Salvar, Adicionar item, Confirmar pagamento.
+
+Toasts: canto inferior, 5s, acessíveis.
+
+Feedback de erro diretamente abaixo do campo (vermelho, texto curto).
+
+Formatação BRL sempre que exibir valores; inputs monetários com máscara e cursor estável.
+
+9) Regras de Cálculo & Edge Cases
+
+Formatação BRL: usar Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }) para exibir; parse de string para número limpando não-dígitos (exceto vírgula → ponto).
+
+Precisão: ao calcular, usar Number((valor).toFixed(2)).
+
+Whatsapp: aceitar 10/11 dígitos; salvar sem símbolos; exibir mascarado.
+
+Margem “>99%” bug: aplicar validação descrita no item 4.
+
+Baixa de estoque: somente quando status muda para pago (ou botão “Confirmar pagamento”); registrar em movimentosEstoque.
+
+Pedidos cancelados: não contam em relatórios; se tiver baixa anterior, criar reverso em movimentos (opcional, se já baixou).
+
+10) Testes de Aceitação (checklist)
+
+Cliente com telefone 11990190965 deve exibir (11) 99019-0965; CEP 12345678 → 12345-678.
+
+Toast após criar cliente/pedido: aparece e some em 5s.
+
+Pedido com 2 itens (produtos do catálogo) + taxa de entrega R$ 8,00 → total correto.
+
+Alterar status para “pago” → aparece no Relatório e na Dashboard; se produto tem composição, baixa do estoque registrada.
+
+Precificação: custo R$ 48,00, rendimento 50, margem 120% → preço sugerido consistente, arredondado; aviso de margem alta; nada “buga”.
+
+Relatórios: ao confirmar 2 vendas no mês, Vendas/Gastos/Lucro refletem exatamente o DB.
+
+Dashboard: “Lucro” = Vendas − Custos; sem dados “do nada”.
+
+11) Entrega
+
+Atualizar front (React) e camada de dados (IndexedDB) conforme esquema.
+
+Garantir migração sem perda de dados.
+
+Documentar em 1 arquivo README-local.md:
+
+Máscaras usadas, fórmulas, fluxo de baixa de estoque, regras de relatório.
+
+Passar lint e revisar acessibilidade básica (labels/aria-live para toasts).

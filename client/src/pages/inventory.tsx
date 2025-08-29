@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Package, Plus, Edit, Trash2, AlertTriangle, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency, formatCurrencyInput, formatCurrencyDisplay, parseCurrency } from "@/lib/formatters";
 import { Ingredient } from "@/types";
 
 export default function Inventory() {
@@ -23,7 +24,7 @@ export default function Inventory() {
     validade: '',
     custoPorUnidade: '',
     unidade: '',
-    alertaEstoqueBaixo: ''
+    alertaMinimo: ''
   });
 
   const resetForm = () => {
@@ -33,7 +34,7 @@ export default function Inventory() {
       validade: '',
       custoPorUnidade: '',
       unidade: '',
-      alertaEstoqueBaixo: ''
+      alertaMinimo: ''
     });
     setEditingIngredient(null);
   };
@@ -47,7 +48,7 @@ export default function Inventory() {
         validade: ingredient.validade.toISOString().split('T')[0],
         custoPorUnidade: ingredient.custoPorUnidade.toString(),
         unidade: ingredient.unidade,
-        alertaEstoqueBaixo: ingredient.alertaEstoqueBaixo.toString()
+        alertaMinimo: ingredient.alertaMinimo.toString()
       });
     } else {
       resetForm();
@@ -72,9 +73,9 @@ export default function Inventory() {
         nome: formData.nome,
         quantidade: parseFloat(formData.quantidade),
         validade: new Date(formData.validade),
-        custoPorUnidade: parseFloat(formData.custoPorUnidade),
+        custoPorUnidade: parseCurrency(formData.custoPorUnidade),
         unidade: formData.unidade,
-        alertaEstoqueBaixo: parseFloat(formData.alertaEstoqueBaixo) || 0
+        alertaMinimo: parseFloat(formData.alertaMinimo) || 0
       };
 
       if (editingIngredient) {
@@ -144,7 +145,7 @@ export default function Inventory() {
   };
 
   const getStockStatus = (ingredient: Ingredient) => {
-    if (ingredient.quantidade <= ingredient.alertaEstoqueBaixo) {
+    if (ingredient.quantidade <= ingredient.alertaMinimo) {
       return { status: 'low', label: 'Estoque baixo', color: 'orange' };
     }
     return { status: 'ok', label: 'OK', color: 'green' };
@@ -233,24 +234,32 @@ export default function Inventory() {
                   <Label htmlFor="custoPorUnidade">Custo por {formData.unidade || 'unidade'} (R$) *</Label>
                   <Input
                     id="custoPorUnidade"
-                    type="number"
-                    step="0.01"
-                    placeholder="4.50"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9.,]*"
+                    placeholder="4,50"
                     value={formData.custoPorUnidade}
-                    onChange={(e) => setFormData({ ...formData, custoPorUnidade: e.target.value })}
+                    onChange={(e) => {
+                      const formatted = formatCurrencyInput(e.target.value);
+                      setFormData({ ...formData, custoPorUnidade: formatted });
+                    }}
+                    onBlur={(e) => {
+                      const formatted = formatCurrencyDisplay(e.target.value);
+                      setFormData({ ...formData, custoPorUnidade: formatted });
+                    }}
                     data-testid="input-cost-per-unit"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="alertaEstoqueBaixo">Alerta de Estoque Baixo</Label>
+                  <Label htmlFor="alertaMinimo">Alerta de Estoque Baixo</Label>
                   <Input
-                    id="alertaEstoqueBaixo"
+                    id="alertaMinimo"
                     type="number"
                     step="0.1"
                     placeholder="1.0"
-                    value={formData.alertaEstoqueBaixo}
-                    onChange={(e) => setFormData({ ...formData, alertaEstoqueBaixo: e.target.value })}
+                    value={formData.alertaMinimo}
+                    onChange={(e) => setFormData({ ...formData, alertaMinimo: e.target.value })}
                     data-testid="input-low-stock-alert"
                   />
                 </div>
@@ -349,6 +358,7 @@ export default function Inventory() {
                         className="flex-1"
                         onClick={() => handleOpenDialog(ingredient)}
                         data-testid={`button-edit-ingredient-${ingredient.id}`}
+                        aria-label={`Editar ingrediente ${ingredient.nome}`}
                       >
                         <Edit size={16} className="mr-1" />
                         Editar
@@ -359,6 +369,7 @@ export default function Inventory() {
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => handleDelete(ingredient.id)}
                         data-testid={`button-delete-ingredient-${ingredient.id}`}
+                        aria-label={`Excluir ingrediente ${ingredient.nome}`}
                       >
                         <Trash2 size={16} />
                       </Button>

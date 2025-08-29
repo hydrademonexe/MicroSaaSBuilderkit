@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Calculator, Plus } from "lucide-react";
+import { MaskedInput } from "@/components/ui/input-mask";
+import { Trash2, Calculator, Plus, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency, validateMargin, calculatePricing, parseCurrency, formatCurrencyInput, formatCurrencyDisplay } from "@/lib/formatters";
 
 export default function Pricing() {
   const { recipes, addRecipe, deleteRecipe, loading } = useRecipes();
@@ -14,35 +16,44 @@ export default function Pricing() {
   
   const [formData, setFormData] = useState({
     nome: '',
-    custoInsumos: '',
+    custoInsumos: '0',
     rendimento: '',
     margem: ''
   });
 
   const [calculations, setCalculations] = useState({
-    costPerUnit: 0,
-    suggestedPrice: 0,
-    profitPerUnit: 0
+    custoUnit: 0,
+    precoSugerido: 0,
+    lucroUnit: 0
   });
+
+  const [marginValidation, setMarginValidation] = useState<{
+    valid: boolean;
+    warning?: string;
+    error?: string;
+  }>({ valid: true });
 
   const handleInputChange = (field: string, value: string) => {
     const newFormData = { ...formData, [field]: value };
     setFormData(newFormData);
     
     // Calculate in real-time
-    const custoInsumos = parseFloat(newFormData.custoInsumos) || 0;
+    const custoInsumos = parseCurrency(newFormData.custoInsumos || '0');
     const rendimento = parseFloat(newFormData.rendimento) || 1;
     const margem = parseFloat(newFormData.margem) || 0;
     
-    const costPerUnit = custoInsumos / rendimento;
-    const suggestedPrice = costPerUnit / (1 - margem / 100);
-    const profitPerUnit = suggestedPrice - costPerUnit;
+    // Validate margin
+    if (field === 'margem' && value !== '') {
+      const validation = validateMargin(margem);
+      setMarginValidation(validation);
+    }
     
-    setCalculations({
-      costPerUnit,
-      suggestedPrice,
-      profitPerUnit
-    });
+    if (custoInsumos > 0 && rendimento > 0 && margem >= 0) {
+      const calc = calculatePricing(custoInsumos, rendimento, margem);
+      setCalculations(calc);
+    } else {
+      setCalculations({ custoUnit: 0, precoSugerido: 0, lucroUnit: 0 });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,18 +68,28 @@ export default function Pricing() {
       return;
     }
 
+    if (!marginValidation.valid) {
+      toast({
+        title: "Erro",
+        description: marginValidation.error || "Margem inválida",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       await addRecipe({
         nome: formData.nome,
-        custoInsumos: parseFloat(formData.custoInsumos),
+        custoInsumos: parseCurrency(formData.custoInsumos),
         rendimento: parseFloat(formData.rendimento),
         margem: parseFloat(formData.margem),
-        precoSugerido: calculations.suggestedPrice,
-        lucroUnidade: calculations.profitPerUnit
+        precoSugerido: calculations.precoSugerido,
+        lucroUnidade: calculations.lucroUnit
       });
 
-      setFormData({ nome: '', custoInsumos: '', rendimento: '', margem: '' });
-      setCalculations({ costPerUnit: 0, suggestedPrice: 0, profitPerUnit: 0 });
+      setFormData({ nome: '', custoInsumos: '0', rendimento: '', margem: '' });
+      setCalculations({ custoUnit: 0, precoSugerido: 0, lucroUnit: 0 });
+      setMarginValidation({ valid: true });
       
       toast({
         title: "Sucesso!",
@@ -98,13 +119,7 @@ export default function Pricing() {
       });
     }
   };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  
 
   return (
     <Layout>
@@ -137,14 +152,22 @@ export default function Pricing() {
               </div>
 
               <div>
-                <Label htmlFor="custoInsumos">Custo dos Ingredientes (R$)</Label>
+                <Label htmlFor="custoInsumos">Custo dos Ingredientes</Label>
                 <Input
                   id="custoInsumos"
-                  type="number"
-                  step="0.01"
-                  placeholder="15.50"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9.,]*"
+                  placeholder="15,50"
                   value={formData.custoInsumos}
-                  onChange={(e) => handleInputChange('custoInsumos', e.target.value)}
+                  onChange={(e) => {
+                    const formatted = formatCurrencyInput(e.target.value);
+                    handleInputChange('custoInsumos', formatted);
+                  }}
+                  onBlur={(e) => {
+                    const formatted = formatCurrencyDisplay(e.target.value);
+                    handleInputChange('custoInsumos', formatted);
+                  }}
                   data-testid="input-ingredient-cost"
                 />
               </div>
@@ -170,7 +193,20 @@ export default function Pricing() {
                   value={formData.margem}
                   onChange={(e) => handleInputChange('margem', e.target.value)}
                   data-testid="input-desired-margin"
+                  className={!marginValidation.valid ? 'border-red-500' : ''}
                 />
+                {marginValidation.warning && (
+                  <div className="flex items-center space-x-1 mt-1 text-yellow-600 text-sm">
+                    <AlertTriangle size={14} />
+                    <span>{marginValidation.warning}</span>
+                  </div>
+                )}
+                {marginValidation.error && (
+                  <div className="flex items-center space-x-1 mt-1 text-red-600 text-sm">
+                    <AlertTriangle size={14} />
+                    <span>{marginValidation.error}</span>
+                  </div>
+                )}
               </div>
 
               {/* Results */}
@@ -179,19 +215,19 @@ export default function Pricing() {
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Custo por unidade:</span>
                     <span className="font-semibold" data-testid="text-cost-per-unit">
-                      {formatCurrency(calculations.costPerUnit)}
+                      {formatCurrency(calculations.custoUnit)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Preço sugerido:</span>
                     <span className="font-bold text-lg text-primary" data-testid="text-suggested-price">
-                      {formatCurrency(calculations.suggestedPrice)}
+                      {formatCurrency(calculations.precoSugerido)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Lucro por unidade:</span>
                     <span className="font-semibold text-green-600" data-testid="text-profit-per-unit">
-                      {formatCurrency(calculations.profitPerUnit)}
+                      {formatCurrency(calculations.lucroUnit)}
                     </span>
                   </div>
                 </CardContent>

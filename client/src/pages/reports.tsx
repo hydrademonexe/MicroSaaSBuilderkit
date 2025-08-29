@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import { Layout } from "@/components/layout";
-import { useOrders } from "@/hooks/use-database";
+import { useOrders, useCustomers, useProducts } from "@/hooks/use-database";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, ArrowDown, ArrowUp, Coins, Calendar, Download, FileText } from "lucide-react";
 
 export default function Reports() {
   const { orders } = useOrders();
+  const { customers } = useCustomers();
+  const { products } = useProducts();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month'>('week');
 
   const reportData = useMemo(() => {
@@ -16,7 +18,7 @@ export default function Reports() {
       : new Date(now.getFullYear(), now.getMonth(), 1);
 
     const periodOrders = orders.filter(order => {
-      const orderDate = new Date(order.dataPedido);
+      const orderDate = new Date(order.createdAt);
       return orderDate >= startDate;
     });
 
@@ -39,7 +41,7 @@ export default function Reports() {
       }
 
       completedOrders.forEach(order => {
-        const orderDate = new Date(order.dataPedido);
+        const orderDate = new Date(order.createdAt);
         const dayName = days[orderDate.getDay()];
         if (dailyData[dayName] !== undefined) {
           dailyData[dayName] += order.valorTotal;
@@ -54,7 +56,7 @@ export default function Reports() {
         
         dailyData[weekLabel] = completedOrders
           .filter(order => {
-            const orderDate = new Date(order.dataPedido);
+            const orderDate = new Date(order.createdAt);
             return orderDate >= weekStart && orderDate < weekEnd;
           })
           .reduce((sum, order) => sum + order.valorTotal, 0);
@@ -100,6 +102,42 @@ ${Object.entries(reportData.dailyData)
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
     link.setAttribute('download', `relatorio_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.txt`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportCSV = () => {
+    // Cabeçalho
+    const headers = [
+      'id', 'cliente', 'produto', 'quantidade', 'preco_unitario', 'total', 'data'
+    ];
+
+    // Mapear pedidos e itens
+    const rows: string[][] = [];
+    orders.forEach(order => {
+      const cliente = customers.find(c => c.id === order.clienteId)?.nome || '—';
+      order.itens.forEach(item => {
+        const produto = products.find(p => p.id === item.produtoId)?.nome || '—';
+        rows.push([
+          order.id,
+          cliente,
+          produto,
+          String(item.quantidade),
+          String(item.precoUnit.toFixed(2)),
+          String(item.subtotal.toFixed(2)),
+          new Date(order.createdAt).toLocaleDateString('pt-BR')
+        ]);
+      });
+    });
+
+    const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v.replaceAll('"', '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `relatorio_pedidos_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -225,6 +263,15 @@ ${Object.entries(reportData.dailyData)
           >
             <FileText size={20} className="mr-2" />
             Exportar Relatório
+          </Button>
+          <Button 
+            variant="outline"
+            className="w-full touch-target"
+            onClick={exportCSV}
+            data-testid="button-export-csv"
+          >
+            <Download size={20} className="mr-2" />
+            Exportar CSV (Pedidos e Itens)
           </Button>
         </div>
 

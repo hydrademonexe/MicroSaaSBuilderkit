@@ -6,7 +6,7 @@ export interface Recipe {
   margem: number;
   precoSugerido: number;
   lucroUnidade: number;
-  createdAt: Date;
+  dataAtualizacao: Date;
 }
 
 export interface Ingredient {
@@ -15,28 +15,82 @@ export interface Ingredient {
   quantidade: number;
   validade: Date;
   custoPorUnidade: number;
-  unidade: string; // kg, g, L, mL, unidade
-  alertaEstoqueBaixo: number;
+  unidade: 'kg' | 'g' | 'L' | 'mL' | 'unidade';
+  alertaMinimo: number;
   createdAt: Date;
+}
+
+export interface Address {
+  logradouro: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  cep: string;
 }
 
 export interface Customer {
   id: string;
   nome: string;
-  whatsapp: string;
+  whatsapp: string; // stored as digits only
+  endereco: Address;
   observacoes: string;
   createdAt: Date;
+}
+
+export interface ProductComposition {
+  insumoId: string;
+  quantidadePorUnidade: number;
+}
+
+export interface Product {
+  id: string;
+  nome: string;
+  sku?: string;
+  descricao?: string;
+  precoVenda: number;
+  categoria?: string;
+  ativo: boolean;
+  composicao: ProductComposition[];
+  createdAt: Date;
+}
+
+export interface OrderItem {
+  produtoId: string;
+  quantidade: number;
+  precoUnit: number;
+  subtotal: number;
 }
 
 export interface Order {
   id: string;
   clienteId: string;
-  produto: string;
-  quantidade: number;
+  itens: OrderItem[];
+  taxaEntrega: number;
+  taxaServico: number;
   valorTotal: number;
-  status: 'pendente' | 'pago' | 'entregue' | 'cancelado';
-  dataPedido: Date;
-  dataEntrega?: Date;
+  status: 'rascunho' | 'pendente' | 'pago' | 'entregue' | 'cancelado';
+  createdAt: Date;
+  paidAt?: Date;
+  deliveredAt?: Date;
+}
+
+export interface StockMovementItem {
+  insumoId: string;
+  quantidade: number;
+}
+
+export interface StockMovement {
+  id: string;
+  tipo: 'baixa' | 'entrada';
+  referencia?: string; // pedidoId or 'ajuste'
+  itens: StockMovementItem[];
+  createdAt: Date;
+}
+
+export interface Config {
+  key: string;
+  value: any;
 }
 
 export interface DailyReport {

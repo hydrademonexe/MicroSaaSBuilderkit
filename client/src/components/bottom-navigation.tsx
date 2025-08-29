@@ -1,4 +1,4 @@
-import { Home, Calculator, Package, Users, BarChart } from "lucide-react";
+import { Home, Calculator, Package, Users, BarChart, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export function BottomNavigation() {
@@ -7,9 +7,10 @@ export function BottomNavigation() {
   const navItems = [
     { path: "/", icon: Home, label: "Início", testId: "nav-dashboard" },
     { path: "/pricing", icon: Calculator, label: "Preços", testId: "nav-pricing" },
-    { path: "/inventory", icon: Package, label: "Estoque", testId: "nav-inventory" },
+    { path: "/products", icon: Package, label: "Produtos", testId: "nav-products" },
     { path: "/customers", icon: Users, label: "Clientes", testId: "nav-customers" },
     { path: "/reports", icon: BarChart, label: "Relatórios", testId: "nav-reports" },
+    { path: "/config", icon: Settings, label: "Config", testId: "nav-config" },
   ];
 
   return (
@@ -25,6 +26,7 @@ export function BottomNavigation() {
                 <button 
                   className="flex flex-col items-center space-y-1 p-2 touch-target"
                   data-testid={item.testId}
+                  aria-label={item.label}
                 >
                   <Icon 
                     size={20}

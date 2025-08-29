@@ -1,8 +1,8 @@
-import { Recipe, Ingredient, Customer, Order, DailyReport, ProductionTask, Alert } from '@/types';
+import { Recipe, Ingredient, Customer, Order, Product, StockMovement, Config, ProductionTask, Alert } from '@/types';
 
 class DatabaseManager {
-  private dbName = 'SalgadosProDB';
-  private version = 1;
+  private dbName = 'lucroAssadoDB';
+  private version = 2; // Updated version to trigger migration
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
@@ -18,37 +18,63 @@ class DatabaseManager {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
-        // Recipes store
-        if (!db.objectStoreNames.contains('recipes')) {
-          const recipeStore = db.createObjectStore('recipes', { keyPath: 'id' });
-          recipeStore.createIndex('nome', 'nome', { unique: false });
+        // Recipes store (receitas)
+        if (!db.objectStoreNames.contains('receitas')) {
+          const recipeStore = db.createObjectStore('receitas', { keyPath: 'id' });
+          recipeStore.createIndex('by_nome', 'nome', { unique: false });
         }
 
-        // Ingredients store
-        if (!db.objectStoreNames.contains('ingredients')) {
-          const ingredientStore = db.createObjectStore('ingredients', { keyPath: 'id' });
-          ingredientStore.createIndex('nome', 'nome', { unique: false });
-          ingredientStore.createIndex('validade', 'validade', { unique: false });
+        // Products store (produtos) 
+        if (!db.objectStoreNames.contains('produtos')) {
+          const productStore = db.createObjectStore('produtos', { keyPath: 'id' });
+          productStore.createIndex('by_nome', 'nome', { unique: false });
+          productStore.createIndex('by_sku', 'sku', { unique: false });
+          productStore.createIndex('by_ativo', 'ativo', { unique: false });
         }
 
-        // Customers store
-        if (!db.objectStoreNames.contains('customers')) {
-          const customerStore = db.createObjectStore('customers', { keyPath: 'id' });
-          customerStore.createIndex('nome', 'nome', { unique: false });
+        // Ingredients store (insumos) - migrate from old ingredients
+        if (!db.objectStoreNames.contains('insumos')) {
+          const ingredientStore = db.createObjectStore('insumos', { keyPath: 'id' });
+          ingredientStore.createIndex('by_nome', 'nome', { unique: false });
+          ingredientStore.createIndex('by_validade', 'validade', { unique: false });
+          
+          // Migrate from old ingredients store if it exists
+          if (db.objectStoreNames.contains('ingredients')) {
+            // Migration will be handled in a separate function
+          }
         }
 
-        // Orders store
-        if (!db.objectStoreNames.contains('orders')) {
-          const orderStore = db.createObjectStore('orders', { keyPath: 'id' });
-          orderStore.createIndex('clienteId', 'clienteId', { unique: false });
-          orderStore.createIndex('status', 'status', { unique: false });
-          orderStore.createIndex('dataPedido', 'dataPedido', { unique: false });
+        // Customers store (clientes) - with new fields
+        if (!db.objectStoreNames.contains('clientes')) {
+          const customerStore = db.createObjectStore('clientes', { keyPath: 'id' });
+          customerStore.createIndex('by_nome', 'nome', { unique: false });
+          customerStore.createIndex('by_whatsapp', 'whatsapp', { unique: false });
+          
+          // Migrate from old customers store if it exists
+          if (db.objectStoreNames.contains('customers')) {
+            // Migration will be handled in a separate function
+          }
         }
 
-        // Reports store
-        if (!db.objectStoreNames.contains('reports')) {
-          const reportStore = db.createObjectStore('reports', { keyPath: 'id' });
-          reportStore.createIndex('data', 'data', { unique: true });
+        // Orders store (pedidos) - completely new structure
+        if (!db.objectStoreNames.contains('pedidos')) {
+          const orderStore = db.createObjectStore('pedidos', { keyPath: 'id' });
+          orderStore.createIndex('by_status', 'status', { unique: false });
+          orderStore.createIndex('by_clienteId', 'clienteId', { unique: false });
+          orderStore.createIndex('by_createdAt', 'createdAt', { unique: false });
+          orderStore.createIndex('by_paidAt', 'paidAt', { unique: false });
+        }
+
+        // Stock movements store (movimentosEstoque)
+        if (!db.objectStoreNames.contains('movimentosEstoque')) {
+          const movementStore = db.createObjectStore('movimentosEstoque', { keyPath: 'id' });
+          movementStore.createIndex('by_tipo', 'tipo', { unique: false });
+          movementStore.createIndex('by_createdAt', 'createdAt', { unique: false });
+        }
+
+        // Config store for settings
+        if (!db.objectStoreNames.contains('config')) {
+          const configStore = db.createObjectStore('config', { keyPath: 'key' });
         }
 
         // Production tasks store
@@ -77,14 +103,14 @@ class DatabaseManager {
   }
 
   // Recipe methods
-  async saveRecipe(recipe: Omit<Recipe, 'id' | 'createdAt'>): Promise<Recipe> {
+  async saveRecipe(recipe: Omit<Recipe, 'id' | 'dataAtualizacao'>): Promise<Recipe> {
     const newRecipe: Recipe = {
       ...recipe,
       id: crypto.randomUUID(),
-      createdAt: new Date(),
+      dataAtualizacao: new Date(),
     };
 
-    const store = await this.getStore('recipes', 'readwrite');
+    const store = await this.getStore('receitas', 'readwrite');
     await new Promise<void>((resolve, reject) => {
       const request = store.add(newRecipe);
       request.onsuccess = () => resolve();
@@ -95,7 +121,7 @@ class DatabaseManager {
   }
 
   async getRecipes(): Promise<Recipe[]> {
-    const store = await this.getStore('recipes');
+    const store = await this.getStore('receitas');
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
@@ -104,7 +130,7 @@ class DatabaseManager {
   }
 
   async deleteRecipe(id: string): Promise<void> {
-    const store = await this.getStore('recipes', 'readwrite');
+    const store = await this.getStore('receitas', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
       request.onsuccess = () => resolve();
@@ -112,7 +138,52 @@ class DatabaseManager {
     });
   }
 
-  // Ingredient methods
+  // Product methods
+  async saveProduct(product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> {
+    const newProduct: Product = {
+      ...product,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+    };
+
+    const store = await this.getStore('produtos', 'readwrite');
+    await new Promise<void>((resolve, reject) => {
+      const request = store.add(newProduct);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+
+    return newProduct;
+  }
+
+  async getProducts(): Promise<Product[]> {
+    const store = await this.getStore('produtos');
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async updateProduct(product: Product): Promise<void> {
+    const store = await this.getStore('produtos', 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.put(product);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    const store = await this.getStore('produtos', 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Ingredient methods (now insumos)
   async saveIngredient(ingredient: Omit<Ingredient, 'id' | 'createdAt'>): Promise<Ingredient> {
     const newIngredient: Ingredient = {
       ...ingredient,
@@ -120,7 +191,7 @@ class DatabaseManager {
       createdAt: new Date(),
     };
 
-    const store = await this.getStore('ingredients', 'readwrite');
+    const store = await this.getStore('insumos', 'readwrite');
     await new Promise<void>((resolve, reject) => {
       const request = store.add(newIngredient);
       request.onsuccess = () => resolve();
@@ -131,7 +202,7 @@ class DatabaseManager {
   }
 
   async getIngredients(): Promise<Ingredient[]> {
-    const store = await this.getStore('ingredients');
+    const store = await this.getStore('insumos');
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
@@ -140,7 +211,7 @@ class DatabaseManager {
   }
 
   async updateIngredient(ingredient: Ingredient): Promise<void> {
-    const store = await this.getStore('ingredients', 'readwrite');
+    const store = await this.getStore('insumos', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.put(ingredient);
       request.onsuccess = () => resolve();
@@ -149,7 +220,7 @@ class DatabaseManager {
   }
 
   async deleteIngredient(id: string): Promise<void> {
-    const store = await this.getStore('ingredients', 'readwrite');
+    const store = await this.getStore('insumos', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
       request.onsuccess = () => resolve();
@@ -165,7 +236,7 @@ class DatabaseManager {
       createdAt: new Date(),
     };
 
-    const store = await this.getStore('customers', 'readwrite');
+    const store = await this.getStore('clientes', 'readwrite');
     await new Promise<void>((resolve, reject) => {
       const request = store.add(newCustomer);
       request.onsuccess = () => resolve();
@@ -176,7 +247,7 @@ class DatabaseManager {
   }
 
   async getCustomers(): Promise<Customer[]> {
-    const store = await this.getStore('customers');
+    const store = await this.getStore('clientes');
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
@@ -185,7 +256,7 @@ class DatabaseManager {
   }
 
   async updateCustomer(customer: Customer): Promise<void> {
-    const store = await this.getStore('customers', 'readwrite');
+    const store = await this.getStore('clientes', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.put(customer);
       request.onsuccess = () => resolve();
@@ -194,7 +265,7 @@ class DatabaseManager {
   }
 
   async deleteCustomer(id: string): Promise<void> {
-    const store = await this.getStore('customers', 'readwrite');
+    const store = await this.getStore('clientes', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
       request.onsuccess = () => resolve();
@@ -209,7 +280,7 @@ class DatabaseManager {
       id: crypto.randomUUID(),
     };
 
-    const store = await this.getStore('orders', 'readwrite');
+    const store = await this.getStore('pedidos', 'readwrite');
     await new Promise<void>((resolve, reject) => {
       const request = store.add(newOrder);
       request.onsuccess = () => resolve();
@@ -220,7 +291,7 @@ class DatabaseManager {
   }
 
   async getOrders(): Promise<Order[]> {
-    const store = await this.getStore('orders');
+    const store = await this.getStore('pedidos');
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
@@ -229,7 +300,7 @@ class DatabaseManager {
   }
 
   async updateOrder(order: Order): Promise<void> {
-    const store = await this.getStore('orders', 'readwrite');
+    const store = await this.getStore('pedidos', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.put(order);
       request.onsuccess = () => resolve();
@@ -238,7 +309,7 @@ class DatabaseManager {
   }
 
   async deleteOrder(id: string): Promise<void> {
-    const store = await this.getStore('orders', 'readwrite');
+    const store = await this.getStore('pedidos', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
       request.onsuccess = () => resolve();
@@ -246,28 +317,106 @@ class DatabaseManager {
     });
   }
 
-  // Report methods
-  async saveDailyReport(report: Omit<DailyReport, 'id'>): Promise<DailyReport> {
-    const newReport: DailyReport = {
-      ...report,
+  // Stock movement methods
+  async saveStockMovement(movement: Omit<StockMovement, 'id'>): Promise<StockMovement> {
+    const newMovement: StockMovement = {
+      ...movement,
       id: crypto.randomUUID(),
     };
 
-    const store = await this.getStore('reports', 'readwrite');
+    const store = await this.getStore('movimentosEstoque', 'readwrite');
     await new Promise<void>((resolve, reject) => {
-      const request = store.put(newReport); // Use put to overwrite existing reports for the same day
+      const request = store.add(newMovement);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
 
-    return newReport;
+    return newMovement;
   }
 
-  async getReports(): Promise<DailyReport[]> {
-    const store = await this.getStore('reports');
+  async getStockMovements(): Promise<StockMovement[]> {
+    const store = await this.getStore('movimentosEstoque');
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Config methods
+  async getConfig(key: string): Promise<any> {
+    const store = await this.getStore('config');
+    return new Promise((resolve, reject) => {
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result?.value);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async setConfig(key: string, value: any): Promise<void> {
+    const config: Config = { key, value };
+    const store = await this.getStore('config', 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.put(config);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Stock deduction when order is paid
+  async processOrderPayment(orderId: string): Promise<void> {
+    const order = await this.getOrderById(orderId);
+    if (!order || order.status === 'pago') return;
+
+    // Update order status
+    order.status = 'pago';
+    order.paidAt = new Date();
+    await this.updateOrder(order);
+
+    // Process stock deduction for each item
+    const products = await this.getProducts();
+    const ingredients = await this.getIngredients();
+    
+    const stockMovementItems = [];
+
+    for (const item of order.itens) {
+      const product = products.find(p => p.id === item.produtoId);
+      if (product && product.composicao.length > 0) {
+        // Product has ingredient composition, deduct stock
+        for (const comp of product.composicao) {
+          const totalDeduction = comp.quantidadePorUnidade * item.quantidade;
+          stockMovementItems.push({
+            insumoId: comp.insumoId,
+            quantidade: totalDeduction
+          });
+          
+          // Update ingredient quantity
+          const ingredient = ingredients.find(i => i.id === comp.insumoId);
+          if (ingredient) {
+            ingredient.quantidade = Math.max(0, ingredient.quantidade - totalDeduction);
+            await this.updateIngredient(ingredient);
+          }
+        }
+      }
+    }
+
+    // Record stock movement
+    if (stockMovementItems.length > 0) {
+      await this.saveStockMovement({
+        tipo: 'baixa',
+        referencia: orderId,
+        itens: stockMovementItems,
+        createdAt: new Date()
+      });
+    }
+  }
+
+  // Get order by ID
+  async getOrderById(id: string): Promise<Order | null> {
+    const store = await this.getStore('pedidos');
+    return new Promise((resolve, reject) => {
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error);
     });
   }
@@ -302,6 +451,15 @@ class DatabaseManager {
     const store = await this.getStore('productionTasks', 'readwrite');
     return new Promise((resolve, reject) => {
       const request = store.put(task);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteProductionTask(id: string): Promise<void> {
+    const store = await this.getStore('productionTasks', 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
@@ -353,7 +511,7 @@ class DatabaseManager {
     });
   }
 
-  // Utility methods
+  // Generate alerts for low stock and expiring items
   async generateAlerts(): Promise<void> {
     const ingredients = await this.getIngredients();
     const today = new Date();
@@ -381,7 +539,7 @@ class DatabaseManager {
       }
 
       // Low stock alerts
-      if (ingredient.quantidade <= ingredient.alertaEstoqueBaixo) {
+      if (ingredient.quantidade <= ingredient.alertaMinimo) {
         await this.saveAlert({
           tipo: 'estoque_baixo',
           titulo: 'Estoque baixo',
@@ -393,12 +551,14 @@ class DatabaseManager {
     }
   }
 
+  // Export customers CSV
   async exportCustomersCSV(): Promise<string> {
     const customers = await this.getCustomers();
-    const headers = ['Nome', 'WhatsApp', 'Observações'];
+    const headers = ['Nome', 'WhatsApp', 'Endereço', 'Observações'];
     const rows = customers.map(customer => [
       customer.nome,
       customer.whatsapp,
+      `${customer.endereco.logradouro}, ${customer.endereco.numero} - ${customer.endereco.bairro}, ${customer.endereco.cidade}/${customer.endereco.uf}`,
       customer.observacoes || ''
     ]);
 
@@ -407,6 +567,45 @@ class DatabaseManager {
       .join('\n');
 
     return csvContent;
+  }
+
+  // Calculate CMV (Cost of Goods Sold) for reports
+  async calculateCMV(orders: Order[]): Promise<number> {
+    const products = await this.getProducts();
+    const ingredients = await this.getIngredients();
+    let totalCost = 0;
+
+    // Try to get estimated CMV percentage from config
+    const cmvPercent = await this.getConfig('cmvEstimadoPercent') || 35;
+
+    for (const order of orders) {
+      let orderCost = 0;
+      let hasComposition = false;
+
+      for (const item of order.itens) {
+        const product = products.find(p => p.id === item.produtoId);
+        if (product && product.composicao.length > 0) {
+          // Calculate real cost based on ingredient composition
+          hasComposition = true;
+          for (const comp of product.composicao) {
+            const ingredient = ingredients.find(i => i.id === comp.insumoId);
+            if (ingredient) {
+              const ingredientCost = comp.quantidadePorUnidade * item.quantidade * ingredient.custoPorUnidade;
+              orderCost += ingredientCost;
+            }
+          }
+        }
+      }
+
+      if (!hasComposition) {
+        // Use estimated percentage if no composition data
+        orderCost = order.valorTotal * (cmvPercent / 100);
+      }
+
+      totalCost += orderCost;
+    }
+
+    return Number(totalCost.toFixed(2));
   }
 }
 

@@ -1,53 +1,63 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "@/components/layout";
-import { useOrders, useAlerts } from "@/hooks/use-database";
+import { useOrders, useAlerts, useProducts, useIngredients } from "@/hooks/use-database";
 import { database } from "@/lib/database";
-import { AlertTriangle, ExternalLink, Plus } from "lucide-react";
+import { AlertTriangle, ExternalLink, Plus, Bell } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/formatters";
 
 export default function Dashboard() {
   const { orders } = useOrders();
   const { alerts } = useAlerts();
+  const { products } = useProducts();
+  const { ingredients } = useIngredients();
+  const [monthlyStats, setMonthlyStats] = useState({
+    totalCosts: 0,
+    totalSales: 0,
+    totalProfit: 0,
+    activeOrders: 0
+  });
 
-  const stats = useMemo(() => {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    const monthlyOrders = orders.filter(order => {
-      const orderDate = new Date(order.dataPedido);
-      return orderDate >= startOfMonth;
-    });
+  useEffect(() => {
+    const calculateStats = async () => {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      // Get orders from this month
+      const monthlyOrders = orders.filter(order => {
+        const orderDate = new Date(order.createdAt);
+        return orderDate >= startOfMonth;
+      });
 
-    const totalSales = monthlyOrders
-      .filter(order => order.status === 'entregue' || order.status === 'pago')
-      .reduce((sum, order) => sum + order.valorTotal, 0);
+      // Only count paid orders for revenue
+      const paidOrders = monthlyOrders.filter(order => order.status === 'pago');
+      
+      const totalSales = paidOrders.reduce((sum, order) => sum + order.valorTotal, 0);
 
-    const activeOrders = orders.filter(order => 
-      order.status === 'pendente' || order.status === 'pago'
-    ).length;
+      // Calculate real costs using database method
+      const totalCosts = await database.calculateCMV(paidOrders);
 
-    // Simplified cost calculation - in a real app this would be more sophisticated
-    const estimatedCosts = totalSales * 0.4; // Assuming 40% cost ratio
-    const estimatedProfit = totalSales - estimatedCosts;
+      const activeOrders = orders.filter(order => 
+        order.status === 'pendente' || order.status === 'pago'
+      ).length;
 
-    return {
-      totalCosts: estimatedCosts,
-      totalSales,
-      totalProfit: estimatedProfit,
-      activeOrders
+      setMonthlyStats({
+        totalCosts,
+        totalSales,
+        totalProfit: totalSales - totalCosts,
+        activeOrders
+      });
     };
-  }, [orders]);
+
+    if (orders.length > 0) {
+      calculateStats();
+    }
+  }, [orders, products, ingredients]);
 
   const unreadAlerts = alerts.filter(alert => !alert.lida).slice(0, 3);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  const totalAlerts = alerts.length;
 
   return (
     <Layout>
@@ -67,7 +77,7 @@ export default function Dashboard() {
                   <div>
                     <p className="text-xs text-muted-foreground">Custos Totais</p>
                     <p className="text-lg font-bold text-foreground" data-testid="text-total-costs">
-                      {formatCurrency(stats.totalCosts)}
+                      {formatCurrency(monthlyStats.totalCosts)}
                     </p>
                   </div>
                 </div>
@@ -83,7 +93,7 @@ export default function Dashboard() {
                   <div>
                     <p className="text-xs text-muted-foreground">Vendas</p>
                     <p className="text-lg font-bold text-foreground" data-testid="text-total-sales">
-                      {formatCurrency(stats.totalSales)}
+                      {formatCurrency(monthlyStats.totalSales)}
                     </p>
                   </div>
                 </div>
@@ -99,7 +109,7 @@ export default function Dashboard() {
                   <div>
                     <p className="text-xs text-muted-foreground">Lucro</p>
                     <p className="text-lg font-bold text-foreground" data-testid="text-total-profit">
-                      {formatCurrency(stats.totalProfit)}
+                      {formatCurrency(monthlyStats.totalProfit)}
                     </p>
                   </div>
                 </div>
@@ -115,7 +125,7 @@ export default function Dashboard() {
                   <div>
                     <p className="text-xs text-muted-foreground">Pedidos Ativos</p>
                     <p className="text-lg font-bold text-foreground" data-testid="text-active-orders">
-                      {stats.activeOrders}
+                      {monthlyStats.activeOrders}
                     </p>
                   </div>
                 </div>
@@ -140,6 +150,17 @@ export default function Dashboard() {
         {/* Alerts */}
         {unreadAlerts.length > 0 && (
           <section className="space-y-3">
+            <Card className="card-shadow">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell size={18} className="text-primary" />
+                  <span className="text-sm">Alertas</span>
+                </div>
+                <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full" data-testid="badge-alerts-count">
+                  {totalAlerts}
+                </span>
+              </CardContent>
+            </Card>
             {unreadAlerts.map((alert) => (
               <Card 
                 key={alert.id} 

@@ -8,15 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle, Circle, Clock, Plus, Calendar } from "lucide-react";
+import { CheckCircle, Circle, Clock, Plus, Calendar, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProductionTask } from "@/types";
 
 export default function Production() {
-  const { tasks, updateTask, addTask, loading } = useProductionTasks();
+  const { tasks, updateTask, addTask, deleteTask, loading } = useProductionTasks();
   const { toast } = useToast();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<ProductionTask | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
@@ -115,6 +116,22 @@ export default function Production() {
       dataVencimento: '',
       categoria: 'preparacao'
     });
+    setEditingTask(null);
+  };
+
+  const handleOpenDialog = (task?: ProductionTask) => {
+    if (task) {
+      setEditingTask(task);
+      setFormData({
+        titulo: task.titulo,
+        descricao: task.descricao,
+        dataVencimento: task.dataVencimento.toISOString().split('T')[0],
+        categoria: task.categoria
+      });
+    } else {
+      resetForm();
+    }
+    setIsDialogOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,21 +147,30 @@ export default function Production() {
     }
 
     try {
-      await addTask({
+      const taskData = {
         titulo: formData.titulo,
         descricao: formData.descricao,
         dataVencimento: new Date(formData.dataVencimento),
         categoria: formData.categoria,
         concluida: false
-      });
+      };
+
+      if (editingTask) {
+        await updateTask({ ...editingTask, ...taskData });
+        toast({
+          title: "Sucesso!",
+          description: "Tarefa atualizada com sucesso"
+        });
+      } else {
+        await addTask(taskData);
+        toast({
+          title: "Sucesso!",
+          description: "Tarefa adicionada com sucesso"
+        });
+      }
 
       setIsDialogOpen(false);
       resetForm();
-      
-      toast({
-        title: "Sucesso!",
-        description: "Tarefa adicionada com sucesso"
-      });
     } catch (error) {
       toast({
         title: "Erro",
@@ -167,6 +193,24 @@ export default function Production() {
         description: "Erro ao atualizar tarefa",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleDeleteTask = async (task: ProductionTask) => {
+    if (confirm(`Tem certeza que deseja excluir a tarefa "${task.titulo}"?`)) {
+      try {
+        await deleteTask(task.id);
+        toast({
+          title: "Sucesso!",
+          description: "Tarefa excluída com sucesso"
+        });
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir tarefa",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -243,7 +287,7 @@ export default function Production() {
             <DialogTrigger asChild>
               <Button 
                 className="bg-primary text-primary-foreground touch-target"
-                onClick={() => setIsDialogOpen(true)}
+                onClick={() => handleOpenDialog()}
                 data-testid="button-add-task"
               >
                 <Plus size={20} />
@@ -251,7 +295,7 @@ export default function Production() {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Nova Tarefa</DialogTitle>
+                <DialogTitle>{editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -330,31 +374,31 @@ export default function Production() {
         {/* Reference Timing Card */}
         <Card className="bg-muted card-shadow">
           <CardHeader>
-            <CardTitle className="text-lg">Referência de Tempos</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Referência de Tempos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Preparo da massa:</span>
                 <span className="font-medium">2 horas</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Montagem:</span>
                 <span className="font-medium">3 horas</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Congelamento:</span>
                 <span className="font-medium">24 horas</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Assamento:</span>
                 <span className="font-medium">25 min/lote</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Validade fresco:</span>
                 <span className="font-medium">3 dias</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Embalagem:</span>
                 <span className="font-medium">1 hora</span>
               </div>
@@ -444,9 +488,29 @@ export default function Production() {
                                   <h4 className={`font-semibold ${task.concluida ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                                     {task.titulo}
                                   </h4>
-                                  <span className={`px-2 py-1 rounded-full text-xs ${getCategoryColor(task.categoria)}`}>
-                                    {getCategoryLabel(task.categoria)}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-1 rounded-full text-xs ${getCategoryColor(task.categoria)}`}>
+                                      {getCategoryLabel(task.categoria)}
+                                    </span>
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={() => handleOpenDialog(task)}
+                                        className="p-1 text-muted-foreground hover:text-foreground touch-target"
+                                        data-testid={`button-edit-task-${task.id}`}
+                                        aria-label="Editar tarefa"
+                                      >
+                                        <Edit size={16} />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteTask(task)}
+                                        className="p-1 text-muted-foreground hover:text-destructive touch-target"
+                                        data-testid={`button-delete-task-${task.id}`}
+                                        aria-label="Excluir tarefa"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                                 
                                 {task.descricao && (
@@ -469,7 +533,7 @@ export default function Production() {
         {/* Quick Action */}
         {tasks.some(task => !task.concluida) && (
           <Button 
-            className="w-full bg-primary text-primary-foreground py-4 px-6 text-lg touch-target card-shadow"
+            className="w-full bg-primary text-primary-foreground py-4 px-6 text-base sm:text-lg touch-target card-shadow min-h-[60px] leading-tight"
             onClick={() => {
               const nextIncompleteTask = tasks.find(task => !task.concluida);
               if (nextIncompleteTask) {
@@ -478,7 +542,7 @@ export default function Production() {
             }}
             data-testid="button-complete-next-task"
           >
-            Marcar Próxima Tarefa como Concluída
+            <span className="whitespace-normal">Marcar Próxima Tarefa como Concluída</span>
           </Button>
         )}
       </div>
