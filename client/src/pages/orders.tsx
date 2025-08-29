@@ -151,7 +151,7 @@ export default function Orders() {
       setNewItem(prev => ({
         ...prev,
         produtoId,
-        precoUnit: product.precoVenda.toString()
+        precoUnit: formatCurrency(product.precoVenda)
       }));
       // Focusar quantidade para agilizar a inclusão do item
       setTimeout(() => {

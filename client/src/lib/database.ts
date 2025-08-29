@@ -579,6 +579,10 @@ class DatabaseManager {
     const cmvPercent = await this.getConfig('cmvEstimadoPercent') || 35;
 
     for (const order of orders) {
+      if (order.status !== 'pago' && order.status !== 'entregue') {
+        continue; // Only count paid/delivered orders
+      }
+      
       let orderCost = 0;
       let hasComposition = false;
 

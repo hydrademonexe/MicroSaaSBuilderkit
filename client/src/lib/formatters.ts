@@ -86,22 +86,46 @@ export function formatCurrencyDisplay(input: string | number): string {
 // =========================
 
 /** Valid margin percentage (0–95) */
-export function validateMargin(marginPercent: number): boolean {
+export function validateMargin(marginPercent: number): { valid: boolean; warning?: string; error?: string } {
   if (!Number.isFinite(marginPercent)) return false;
-  return marginPercent >= 0 && marginPercent < 95;
+  
+  if (marginPercent < 0) {
+    return { valid: false, error: "Margem não pode ser negativa" };
+  }
+  
+  if (marginPercent > 300) {
+    return { valid: false, error: "Margem muito alta (máximo 300%)" };
+  }
+  
+  if (marginPercent >= 95 && marginPercent <= 300) {
+    return { valid: true, warning: "Margem muito alta pode distorcer preço" };
+  }
+  
+  return { valid: true };
 }
 
 /**
  * calculatePricing:
- * Given unit cost (cmv) and desired margin %, returns suggested price.
- * price = cost / (1 - margin%)
+ * Given ingredient cost, yield and desired margin %, returns pricing calculations.
  */
-export function calculatePricing(costPerUnit: number, marginPercent: number): number {
-  const cost = Number.isFinite(costPerUnit) ? costPerUnit : 0;
-  const m = Math.max(0, Math.min(95, marginPercent)) / 100;
-  if (m >= 0.95) return Number((cost / (1 - 0.95)).toFixed(2));
-  const price = cost / (1 - m);
-  return Number(price.toFixed(2));
+export function calculatePricing(ingredientCost: number, yield: number, marginPercent: number): {
+  custoUnit: number;
+  precoSugerido: number;
+  lucroUnit: number;
+} {
+  const cost = Number.isFinite(ingredientCost) ? ingredientCost : 0;
+  const units = Number.isFinite(yield) && yield > 0 ? yield : 1;
+  const margin = Math.max(0, Math.min(300, marginPercent));
+  
+  const custoUnit = Number((cost / units).toFixed(2));
+  const precoSugerido = Number((custoUnit * (1 + margin / 100)).toFixed(2));
+  const lucroUnit = Number((precoSugerido - custoUnit).toFixed(2));
+  
+  return {
+    custoUnit,
+    precoSugerido,
+    lucroUnit
+  };
 }
 
 // =========================

@@ -32,7 +32,7 @@ export default function Dashboard() {
       });
 
       // Only count paid orders for revenue
-      const paidOrders = monthlyOrders.filter(order => order.status === 'pago');
+      const paidOrders = monthlyOrders.filter(order => order.status === 'pago' || order.status === 'entregue');
       
       const totalSales = paidOrders.reduce((sum, order) => sum + order.valorTotal, 0);
 
@@ -40,7 +40,7 @@ export default function Dashboard() {
       const totalCosts = await database.calculateCMV(paidOrders);
 
       const activeOrders = orders.filter(order => 
-        order.status === 'pendente' || order.status === 'pago'
+        order.status === 'pendente' || (order.status === 'pago' && !order.deliveredAt)
       ).length;
 
       setMonthlyStats({

@@ -1,77 +1,97 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { useOrders, useCustomers, useProducts } from "@/hooks/use-database";
+import { database } from "@/lib/database";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, ArrowDown, ArrowUp, Coins, Calendar, Download, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Reports() {
   const { orders } = useOrders();
   const { customers } = useCustomers();
   const { products } = useProducts();
+  const { toast } = useToast();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month'>('week');
+  const [reportData, setReportData] = useState({
+    totalSpent: 0,
+    totalEarned: 0,
+    netProfit: 0,
+    dailyData: {} as { [key: string]: number },
+    maxValue: 1
+  });
 
-  const reportData = useMemo(() => {
-    const now = new Date();
-    const startDate = selectedPeriod === 'week' 
-      ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      : new Date(now.getFullYear(), now.getMonth(), 1);
+  useEffect(() => {
+    const calculateReportData = async () => {
+      const now = new Date();
+      const startDate = selectedPeriod === 'week' 
+        ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        : new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const periodOrders = orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
-      return orderDate >= startDate;
-    });
-
-    const completedOrders = periodOrders.filter(order => order.status === 'entregue');
-    const totalEarned = completedOrders.reduce((sum, order) => sum + order.valorTotal, 0);
-    
-    // Simplified cost calculation - in a real app this would be more sophisticated
-    const estimatedCosts = totalEarned * 0.4; // Assuming 40% cost ratio
-    const netProfit = totalEarned - estimatedCosts;
-
-    // Daily breakdown for chart
-    const dailyData: { [key: string]: number } = {};
-    
-    if (selectedPeriod === 'week') {
-      const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        const dayName = days[date.getDay()];
-        dailyData[dayName] = 0;
-      }
-
-      completedOrders.forEach(order => {
+      const periodOrders = orders.filter(order => {
         const orderDate = new Date(order.createdAt);
-        const dayName = days[orderDate.getDay()];
-        if (dailyData[dayName] !== undefined) {
-          dailyData[dayName] += order.valorTotal;
-        }
+        return orderDate >= startDate;
       });
-    } else {
-      // Monthly view - show last 4 weeks
-      for (let i = 3; i >= 0; i--) {
-        const weekStart = new Date(now.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000);
-        const weekEnd = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-        const weekLabel = `Sem ${4 - i}`;
-        
-        dailyData[weekLabel] = completedOrders
-          .filter(order => {
-            const orderDate = new Date(order.createdAt);
-            return orderDate >= weekStart && orderDate < weekEnd;
-          })
-          .reduce((sum, order) => sum + order.valorTotal, 0);
+
+      const completedOrders = periodOrders.filter(order => order.status === 'pago' || order.status === 'entregue');
+      const totalEarned = completedOrders.reduce((sum, order) => sum + order.valorTotal, 0);
+      
+      // Use database CMV calculation
+      let estimatedCosts = 0;
+      try {
+        estimatedCosts = await database.calculateCMV(completedOrders);
+      } catch (error) {
+        console.error('Error calculating CMV:', error);
+        estimatedCosts = totalEarned * 0.35; // Fallback to 35%
       }
-    }
+      const netProfit = totalEarned - estimatedCosts;
 
-    const maxValue = Math.max(...Object.values(dailyData));
+      // Daily breakdown for chart
+      const dailyData: { [key: string]: number } = {};
+      
+      if (selectedPeriod === 'week') {
+        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+          const dayName = days[date.getDay()];
+          dailyData[dayName] = 0;
+        }
 
-    return {
-      totalSpent: estimatedCosts,
-      totalEarned,
-      netProfit,
-      dailyData,
-      maxValue: maxValue || 1
+        completedOrders.forEach(order => {
+          const orderDate = new Date(order.createdAt);
+          const dayName = days[orderDate.getDay()];
+          if (dailyData[dayName] !== undefined) {
+            dailyData[dayName] += order.valorTotal;
+          }
+        });
+      } else {
+        // Monthly view - show last 4 weeks
+        for (let i = 3; i >= 0; i--) {
+          const weekStart = new Date(now.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000);
+          const weekEnd = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+          const weekLabel = `Sem ${4 - i}`;
+          
+          dailyData[weekLabel] = completedOrders
+            .filter(order => {
+              const orderDate = new Date(order.createdAt);
+              return orderDate >= weekStart && orderDate < weekEnd;
+            })
+            .reduce((sum, order) => sum + order.valorTotal, 0);
+        }
+      }
+
+      const maxValue = Math.max(...Object.values(dailyData));
+
+      setReportData({
+        totalSpent: estimatedCosts,
+        totalEarned,
+        netProfit,
+        dailyData,
+        maxValue: maxValue || 1
+      });
     };
+
+    calculateReportData();
   }, [orders, selectedPeriod]);
 
   const formatCurrency = (value: number) => {
@@ -82,7 +102,8 @@ export default function Reports() {
   };
 
   const exportReport = () => {
-    const reportContent = `
+    try {
+      const reportContent = `
 Relatório de Vendas - ${selectedPeriod === 'week' ? 'Semanal' : 'Mensal'}
 Gerado em: ${new Date().toLocaleDateString('pt-BR')}
 
@@ -95,53 +116,78 @@ DETALHAMENTO:
 ${Object.entries(reportData.dailyData)
   .map(([day, value]) => `${day}: ${formatCurrency(value)}`)
   .join('\n')}
-    `.trim();
+      `.trim();
 
-    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.txt`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `relatorio_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.txt`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Relatório exportado com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao exportar relatório",
+        variant: "destructive"
+      });
+    }
   };
 
   const exportCSV = () => {
-    // Cabeçalho
-    const headers = [
-      'id', 'cliente', 'produto', 'quantidade', 'preco_unitario', 'total', 'data'
-    ];
+    try {
+      // Cabeçalho
+      const headers = [
+        'id', 'cliente', 'produto', 'quantidade', 'preco_unitario', 'total', 'data'
+      ];
 
-    // Mapear pedidos e itens
-    const rows: string[][] = [];
-    orders.forEach(order => {
-      const cliente = customers.find(c => c.id === order.clienteId)?.nome || '—';
-      order.itens.forEach(item => {
-        const produto = products.find(p => p.id === item.produtoId)?.nome || '—';
-        rows.push([
-          order.id,
-          cliente,
-          produto,
-          String(item.quantidade),
-          String(item.precoUnit.toFixed(2)),
-          String(item.subtotal.toFixed(2)),
-          new Date(order.createdAt).toLocaleDateString('pt-BR')
-        ]);
+      // Mapear pedidos e itens
+      const rows: string[][] = [];
+      orders.forEach(order => {
+        const cliente = customers.find(c => c.id === order.clienteId)?.nome || '—';
+        order.itens.forEach(item => {
+          const produto = products.find(p => p.id === item.produtoId)?.nome || '—';
+          rows.push([
+            order.id,
+            cliente,
+            produto,
+            String(item.quantidade),
+            String(item.precoUnit.toFixed(2)),
+            String(item.subtotal.toFixed(2)),
+            new Date(order.createdAt).toLocaleDateString('pt-BR')
+          ]);
+        });
       });
-    });
 
-    const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v.replaceAll('"', '""')}"`).join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio_pedidos_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v.replaceAll('"', '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `relatorio_pedidos_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Dados exportados em CSV com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao exportar CSV",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

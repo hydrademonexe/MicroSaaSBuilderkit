@@ -98,7 +98,7 @@ export default function Products() {
 
   const calculateMargin = () => {
     const cost = calculateProductCost();
-    const price = parseFloat(formData.precoVenda) || 0;
+    const price = parseCurrency(formData.precoVenda) || 0;
     if (cost === 0 || price === 0) return 0;
     return ((price - cost) / price) * 100;
   };

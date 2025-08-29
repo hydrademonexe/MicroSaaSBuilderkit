@@ -37,7 +37,7 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
           setDisplayValue(formattedCEP);
           break;
         case 'currency':
-          const currencyFormatted = addCurrencyMask(e);
+          const currencyFormatted = formatCurrencyInput(newValue);
           parsedValue = parseCurrency(currencyFormatted).toString();
           setDisplayValue(currencyFormatted);
           break;
