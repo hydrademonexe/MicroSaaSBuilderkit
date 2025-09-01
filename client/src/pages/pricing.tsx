@@ -124,22 +124,23 @@ export default function Pricing() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center space-x-3">
-          <Calculator className="text-primary" size={24} />
-          <h1 className="text-xl font-bold text-foreground">Precificação de Receitas</h1>
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <Calculator className="text-primary" size={20} />
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Precificação de Receitas</h1>
         </div>
 
         {/* Calculator Form */}
         <Card className="card-shadow">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Plus size={20} />
+              <Plus size={18} />
               <span>Nova Receita</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+              <div className="space-y-4">
+                <div>
                 <Label htmlFor="nome">Nome da Receita</Label>
                 <Input
                   id="nome"
@@ -150,8 +151,10 @@ export default function Pricing() {
                   data-testid="input-recipe-name"
                 />
               </div>
+              </div>
 
-              <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                 <Label htmlFor="custoInsumos">Custo dos Ingredientes</Label>
                 <Input
                   id="custoInsumos"
@@ -171,8 +174,10 @@ export default function Pricing() {
                   data-testid="input-ingredient-cost"
                 />
               </div>
+              </div>
 
-              <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                 <Label htmlFor="rendimento">Unidades Produzidas</Label>
                 <Input
                   id="rendimento"
@@ -183,8 +188,9 @@ export default function Pricing() {
                   data-testid="input-units-produced"
                 />
               </div>
+              </div>
 
-              <div>
+                <div>
                 <Label htmlFor="margem">Margem Desejada (%)</Label>
                 <Input
                   id="margem"
@@ -207,6 +213,7 @@ export default function Pricing() {
                     <span>{marginValidation.error}</span>
                   </div>
                 )}
+              </div>
               </div>
 
               {/* Results */}
@@ -246,63 +253,63 @@ export default function Pricing() {
 
         {/* Saved Recipes */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Receitas Salvas</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-foreground">Receitas Salvas</h2>
           
           {loading ? (
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <p className="text-center text-muted-foreground">Carregando receitas...</p>
               </CardContent>
             </Card>
           ) : recipes.length === 0 ? (
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <p className="text-center text-muted-foreground">
                   Nenhuma receita cadastrada ainda. Use o formulário acima para criar sua primeira receita!
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {recipes.map((recipe) => (
                 <Card key={recipe.id} className="card-shadow" data-testid={`card-recipe-${recipe.id}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-foreground">{recipe.nome}</h3>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-start justify-between mb-2 sm:mb-3">
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base pr-2">{recipe.nome}</h3>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(recipe.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                         data-testid={`button-delete-recipe-${recipe.id}`}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </Button>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mb-2 sm:mb-3">
                       <div>
                         <span className="text-muted-foreground">Custo total:</span>
-                        <span className="font-medium ml-1">{formatCurrency(recipe.custoInsumos)}</span>
+                        <span className="font-medium ml-1 block sm:inline">{formatCurrency(recipe.custoInsumos)}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Rendimento:</span>
-                        <span className="font-medium ml-1">{recipe.rendimento} unidades</span>
+                        <span className="font-medium ml-1 block sm:inline">{recipe.rendimento} un.</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Margem:</span>
-                        <span className="font-medium ml-1">{recipe.margem}%</span>
+                        <span className="font-medium ml-1 block sm:inline">{recipe.margem}%</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Lucro/unidade:</span>
-                        <span className="font-medium ml-1 text-green-600">{formatCurrency(recipe.lucroUnidade)}</span>
+                        <span className="font-medium ml-1 text-green-600 block sm:inline">{formatCurrency(recipe.lucroUnidade)}</span>
                       </div>
                     </div>
                     
-                    <div className="bg-primary/10 rounded-lg p-2">
+                    <div className="bg-primary/10 rounded-lg p-2 sm:p-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-foreground">Preço de Venda:</span>
-                        <span className="text-lg font-bold text-primary">{formatCurrency(recipe.precoSugerido)}</span>
+                        <span className="text-xs sm:text-sm font-medium text-foreground">Preço de Venda:</span>
+                        <span className="text-base sm:text-lg font-bold text-primary">{formatCurrency(recipe.precoSugerido)}</span>
                       </div>
                     </div>
                   </CardContent>

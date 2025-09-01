@@ -278,9 +278,9 @@ export default function Production() {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Clock className="text-primary" size={24} />
-            <h1 className="text-xl font-bold text-foreground">Rotina de Produção</h1>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Clock className="text-primary" size={20} />
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Rotina de Produção</h1>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -290,12 +290,12 @@ export default function Production() {
                 onClick={() => handleOpenDialog()}
                 data-testid="button-add-task"
               >
-                <Plus size={20} />
+                <Plus size={18} />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
+                <DialogTitle className="text-lg">{editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -352,7 +352,7 @@ export default function Production() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    className="flex-1"
+                    className="flex-1 text-sm"
                     onClick={() => setIsDialogOpen(false)}
                     data-testid="button-cancel-task"
                   >
@@ -360,7 +360,7 @@ export default function Production() {
                   </Button>
                   <Button 
                     type="submit" 
-                    className="flex-1 bg-primary text-primary-foreground"
+                    className="flex-1 bg-primary text-primary-foreground text-sm"
                     data-testid="button-save-task"
                   >
                     Salvar
@@ -374,33 +374,33 @@ export default function Production() {
         {/* Reference Timing Card */}
         <Card className="bg-muted card-shadow">
           <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Referência de Tempos</CardTitle>
+            <CardTitle className="text-sm sm:text-base lg:text-lg">Referência de Tempos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Preparo da massa:</span>
-                <span className="font-medium">2 horas</span>
+                <span className="font-medium ml-2">2h</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Montagem:</span>
-                <span className="font-medium">3 horas</span>
+                <span className="font-medium ml-2">3h</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Congelamento:</span>
-                <span className="font-medium">24 horas</span>
+                <span className="font-medium ml-2">24h</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Assamento:</span>
-                <span className="font-medium">25 min/lote</span>
+                <span className="font-medium ml-2">25min</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Validade fresco:</span>
-                <span className="font-medium">3 dias</span>
+                <span className="font-medium ml-2">3 dias</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Embalagem:</span>
-                <span className="font-medium">1 hora</span>
+                <span className="font-medium ml-2">1h</span>
               </div>
             </div>
           </CardContent>
@@ -409,20 +409,20 @@ export default function Production() {
         {/* Tasks by Date */}
         {loading ? (
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <p className="text-center text-muted-foreground">Carregando cronograma...</p>
             </CardContent>
           </Card>
         ) : sortedDates.length === 0 ? (
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <p className="text-center text-muted-foreground">
                 Nenhuma tarefa cadastrada ainda. Clique no botão + para adicionar sua primeira tarefa!
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {sortedDates.map((dateKey) => {
               const date = new Date(dateKey);
               const dayTasks = tasksByDate[dateKey];
@@ -443,23 +443,23 @@ export default function Production() {
               return (
                 <Card key={dateKey} className="card-shadow">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
-                        <CardTitle className="text-lg flex items-center space-x-2">
-                          <Calendar size={20} />
+                        <CardTitle className="text-base sm:text-lg flex items-center space-x-2">
+                          <Calendar size={16} />
                           <span>{formatDate(date)}</span>
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {completedTasks}/{totalTasks} tarefas concluídas
                         </p>
                       </div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${dayStatusColor}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs ${dayStatusColor} whitespace-nowrap`}>
                         {dayStatus}
                       </span>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {dayTasks
                         .sort((a, b) => a.categoria.localeCompare(b.categoria))
                         .map((task) => {
@@ -468,7 +468,7 @@ export default function Production() {
                           return (
                             <div 
                               key={task.id} 
-                              className="flex items-start space-x-3 p-3 rounded-lg border border-border"
+                              className="flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg border border-border"
                               data-testid={`task-${task.id}`}
                             >
                               <button
@@ -477,44 +477,44 @@ export default function Production() {
                                 data-testid={`button-toggle-task-${task.id}`}
                               >
                                 {task.concluida ? (
-                                  <CheckCircle className="text-green-500" size={20} />
+                                  <CheckCircle className="text-green-500 flex-shrink-0" size={18} />
                                 ) : (
-                                  <Circle className="text-muted-foreground" size={20} />
+                                  <Circle className="text-muted-foreground flex-shrink-0" size={18} />
                                 )}
                               </button>
                               
                               <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                  <h4 className={`font-semibold ${task.concluida ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 mb-1">
+                                  <h4 className={`font-semibold text-sm sm:text-base ${task.concluida ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                                     {task.titulo}
                                   </h4>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                                     <span className={`px-2 py-1 rounded-full text-xs ${getCategoryColor(task.categoria)}`}>
                                       {getCategoryLabel(task.categoria)}
                                     </span>
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-0.5 sm:gap-1">
                                       <button
                                         onClick={() => handleOpenDialog(task)}
-                                        className="p-1 text-muted-foreground hover:text-foreground touch-target"
+                                        className="p-1.5 text-muted-foreground hover:text-foreground touch-target"
                                         data-testid={`button-edit-task-${task.id}`}
                                         aria-label="Editar tarefa"
                                       >
-                                        <Edit size={16} />
+                                        <Edit size={14} />
                                       </button>
                                       <button
                                         onClick={() => handleDeleteTask(task)}
-                                        className="p-1 text-muted-foreground hover:text-destructive touch-target"
+                                        className="p-1.5 text-muted-foreground hover:text-destructive touch-target"
                                         data-testid={`button-delete-task-${task.id}`}
                                         aria-label="Excluir tarefa"
                                       >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={14} />
                                       </button>
                                     </div>
                                   </div>
                                 </div>
                                 
                                 {task.descricao && (
-                                  <p className={`text-sm ${task.concluida ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}>
+                                  <p className={`text-xs sm:text-sm ${task.concluida ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}>
                                     {task.descricao}
                                   </p>
                                 )}
@@ -533,7 +533,7 @@ export default function Production() {
         {/* Quick Action */}
         {tasks.some(task => !task.concluida) && (
           <Button 
-            className="w-full bg-primary text-primary-foreground py-4 px-6 text-base sm:text-lg touch-target card-shadow min-h-[60px] leading-tight"
+            className="w-full bg-primary text-primary-foreground py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base lg:text-lg touch-target card-shadow min-h-[50px] sm:min-h-[60px] leading-tight"
             onClick={() => {
               const nextIncompleteTask = tasks.find(task => !task.concluida);
               if (nextIncompleteTask) {
@@ -542,7 +542,7 @@ export default function Production() {
             }}
             data-testid="button-complete-next-task"
           >
-            <span className="whitespace-normal">Marcar Próxima Tarefa como Concluída</span>
+            <span className="whitespace-normal text-center">Marcar Próxima Tarefa como Concluída</span>
           </Button>
         )}
       </div>

@@ -76,7 +76,7 @@ export default function ConfigPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
           <Settings className="text-primary" />
           Configurações
         </h1>
@@ -84,7 +84,7 @@ export default function ConfigPage() {
         {/* App Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Aparência do App</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Aparência do App</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -102,15 +102,15 @@ export default function ConfigPage() {
             
             <div>
               <Label htmlFor="logo">Logo/Avatar</Label>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   {logoUrl ? (
                     <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
                     <Image className="w-8 h-8 text-muted-foreground" />
                   )}
                 </div>
-                <div className="flex-1">
+                <div className="w-full sm:flex-1">
                   <input
                     id="logo"
                     type="file"
@@ -120,9 +120,9 @@ export default function ConfigPage() {
                     data-testid="input-logo-upload"
                   />
                   <label htmlFor="logo">
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" asChild className="w-full sm:w-auto">
                       <span>
-                        <Upload className="w-4 h-4 mr-2" />
+                        <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
                         Escolher Imagem
                       </span>
                     </Button>
@@ -136,7 +136,7 @@ export default function ConfigPage() {
         {/* Financial Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Financeiro</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Financeiro</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>

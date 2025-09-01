@@ -283,7 +283,7 @@ export default function Orders() {
     <Layout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <ShoppingBag className="text-primary" />
             Pedidos de Clientes
           </h1>
@@ -295,7 +295,7 @@ export default function Orders() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingOrder ? 'Editar Pedido' : 'Novo Pedido'}</DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl">{editingOrder ? 'Editar Pedido' : 'Novo Pedido'}</DialogTitle>
               </DialogHeader>
               
               <form onSubmit={handleOrderSubmit} className="space-y-4">
@@ -341,9 +341,9 @@ export default function Orders() {
 
                 {/* Add Items Section */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold">Itens do Pedido</h3>
+                  <h3 className="font-semibold text-base">Itens do Pedido</h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
                     <div>
                       <Label>Produto</Label>
                       <Select value={newItem.produtoId} onValueChange={handleProductSelect}>
@@ -363,7 +363,7 @@ export default function Orders() {
                     <div>
                       <Label>Quantidade</Label>
                       <Input
-                        type="number"
+                        type="tel"
                         min="1"
                         value={newItem.quantidade}
                         onChange={(e) => setNewItem(prev => ({ ...prev, quantidade: e.target.value }))}
@@ -379,7 +379,7 @@ export default function Orders() {
                     </div>
 
                     <div>
-                      <Label>Preço Unitário</Label>
+                      <Label className="text-sm">Preço Unit.</Label>
                       <Input
                         type="text"
                         inputMode="decimal"
@@ -402,6 +402,7 @@ export default function Orders() {
                       type="button"
                       onClick={addItemToOrder}
                       data-testid="button-add-item"
+                      className="w-full sm:w-auto"
                     >
                       <Plus size={16} className="mr-1" />
                       Adicionar
@@ -411,24 +412,24 @@ export default function Orders() {
                   {/* Items List */}
                   {orderItems.length > 0 && (
                     <Card>
-                      <CardContent className="p-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium">Itens Adicionados:</h4>
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-sm sm:text-base">Itens Adicionados:</h4>
                           {orderItems.map((item, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                            <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-3 rounded gap-2">
                               <div className="flex-1">
-                                <span className="font-medium">{getProductName(item.produtoId)}</span>
-                                <div className="text-sm text-muted-foreground">
+                                <span className="font-medium text-sm sm:text-base">{getProductName(item.produtoId)}</span>
+                                <div className="text-xs sm:text-sm text-muted-foreground">
                                   {formatCurrency(item.precoUnit)} × {item.quantidade} = {formatCurrency(item.quantidade * item.precoUnit)}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 self-end sm:self-center">
                                 <Input
-                                  type="number"
+                                  type="tel"
                                   min="1"
                                   value={item.quantidade}
                                   onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 0)}
-                                  className="w-20"
+                                  className="w-16 sm:w-20 text-center"
                                   data-testid={`input-quantity-${index}`}
                                 />
                                 <Button
@@ -450,7 +451,7 @@ export default function Orders() {
                 </div>
 
                 {/* Taxes and Total */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Label htmlFor="taxaEntrega">Taxa de Entrega</Label>
                     <Input
@@ -497,7 +498,7 @@ export default function Orders() {
                 {/* Order Summary */}
                 {orderItems.length > 0 && (
                   <Card className="bg-muted">
-                    <CardContent className="p-4 space-y-2">
+                    <CardContent className="p-3 sm:p-4 space-y-2">
                       <div className="flex justify-between">
                         <span>Subtotal:</span>
                         <span data-testid="text-subtotal">{formatCurrency(subtotal)}</span>
@@ -516,14 +517,14 @@ export default function Orders() {
                       )}
                       <Separator />
                       <div className="flex justify-between font-bold text-lg">
-                        <span>Total:</span>
+                        <span className="text-base sm:text-lg">Total:</span>
                         <span className="text-primary" data-testid="text-total">{formatCurrency(total)}</span>
                       </div>
                     </CardContent>
                   </Card>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button type="submit" data-testid="button-save-order">
                     {editingOrder ? 'Atualizar' : 'Salvar'} Pedido
                   </Button>
@@ -539,7 +540,7 @@ export default function Orders() {
         {/* Orders List */}
         <Card>
           <CardHeader>
-            <CardTitle>Pedidos de Clientes</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Pedidos de Clientes</CardTitle>
           </CardHeader>
           <CardContent>
             {ordersLoading ? (
@@ -547,11 +548,11 @@ export default function Orders() {
             ) : orders.length === 0 ? (
               <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {orders.map((order) => (
                   <Card key={order.id} className="border-l-4 border-primary">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-semibold" data-testid={`text-customer-name-${order.id}`}>
@@ -562,7 +563,7 @@ export default function Orders() {
                             </Badge>
                           </div>
                           
-                          <div className="space-y-1 text-sm text-muted-foreground mb-2">
+                          <div className="space-y-1 text-xs sm:text-sm text-muted-foreground mb-2">
                             <p>Criado em: {new Date(order.createdAt).toLocaleDateString('pt-BR')}</p>
                             {order.paidAt && (
                               <p>Pago em: {new Date(order.paidAt).toLocaleDateString('pt-BR')}</p>
@@ -570,24 +571,25 @@ export default function Orders() {
                             <p>{order.itens.length} item{order.itens.length !== 1 ? 's' : ''}</p>
                           </div>
 
-                          <div className="flex items-center gap-4">
-                            <span className="font-bold text-lg text-primary" data-testid={`text-order-total-${order.id}`}>
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            <span className="font-bold text-base sm:text-lg text-primary" data-testid={`text-order-total-${order.id}`}>
                               {formatCurrency(order.valorTotal)}
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
                           {order.status === 'pendente' && (
                             <Button
                               variant="outline"
-                              size="sm"
+                              size="sm" 
                               onClick={() => handleMarkAsPaid(order.id)}
                               data-testid={`button-mark-paid-${order.id}`}
                               aria-label={`Marcar pedido de ${getCustomerName(order.clienteId)} como pago`}
+                              className="text-xs sm:text-sm whitespace-nowrap"
                             >
-                              <Check size={16} className="mr-1" />
-                              Marcar como Pago
+                              <Check size={14} className="mr-1" />
+                              Pago
                             </Button>
                           )}
                           <Button
@@ -596,8 +598,9 @@ export default function Orders() {
                             onClick={() => handleOpenOrderDialog(order)}
                             data-testid={`button-edit-${order.id}`}
                             aria-label={`Editar pedido de ${getCustomerName(order.clienteId)}`}
+                            className="min-w-[44px]"
                           >
-                            <Edit size={16} />
+                            <Edit size={14} />
                           </Button>
                           <Button
                             variant="outline"
@@ -605,23 +608,24 @@ export default function Orders() {
                             onClick={() => handleDeleteOrder(order.id)}
                             data-testid={`button-delete-${order.id}`}
                             aria-label={`Excluir pedido de ${getCustomerName(order.clienteId)}`}
+                            className="min-w-[44px]"
                           >
-                            <Trash2 size={16} className="text-red-600" />
+                            <Trash2 size={14} className="text-red-600" />
                           </Button>
                         </div>
                       </div>
 
                       {/* Order Items Summary */}
-                      <div className="mt-3 pt-3 border-t">
+                      <div className="mt-3 pt-3 border-t border-border">
                         <div className="space-y-1">
                           {order.itens.map((item, index) => (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>{getProductName(item.produtoId)} × {item.quantidade}</span>
-                              <span>{formatCurrency(item.subtotal)}</span>
+                            <div key={index} className="flex justify-between text-xs sm:text-sm">
+                              <span className="truncate mr-2">{getProductName(item.produtoId)} × {item.quantidade}</span>
+                              <span className="font-medium flex-shrink-0">{formatCurrency(item.subtotal)}</span>
                             </div>
                           ))}
                           {(order.taxaEntrega > 0 || order.taxaServico > 0) && (
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs text-muted-foreground mt-1">
                               {order.taxaEntrega > 0 && `+ Taxa entrega: ${formatCurrency(order.taxaEntrega)}`}
                               {order.taxaServico > 0 && ` + Taxa serviço: ${formatCurrency(order.taxaServico)}`}
                             </div>

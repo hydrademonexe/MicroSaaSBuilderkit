@@ -155,9 +155,9 @@ export default function Inventory() {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Package className="text-primary" size={24} />
-            <h1 className="text-xl font-bold text-foreground">Controle de Estoque</h1>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Package className="text-primary" size={20} />
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">Controle de Estoque</h1>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -167,10 +167,10 @@ export default function Inventory() {
                 onClick={() => handleOpenDialog()}
                 data-testid="button-add-ingredient"
               >
-                <Plus size={20} />
+                <Plus size={18} />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingIngredient ? 'Editar Ingrediente' : 'Adicionar Ingrediente'}
@@ -189,7 +189,7 @@ export default function Inventory() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div>
                     <Label htmlFor="quantidade">Quantidade *</Label>
                     <Input
@@ -268,7 +268,7 @@ export default function Inventory() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    className="flex-1"
+                    className="flex-1 text-sm"
                     onClick={() => setIsDialogOpen(false)}
                     data-testid="button-cancel"
                   >
@@ -276,7 +276,7 @@ export default function Inventory() {
                   </Button>
                   <Button 
                     type="submit" 
-                    className="flex-1 bg-primary text-primary-foreground"
+                    className="flex-1 bg-primary text-primary-foreground text-sm"
                     data-testid="button-save-ingredient"
                   >
                     {editingIngredient ? 'Atualizar' : 'Salvar'}
@@ -290,20 +290,20 @@ export default function Inventory() {
         {/* Ingredients List */}
         {loading ? (
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <p className="text-center text-muted-foreground">Carregando estoque...</p>
             </CardContent>
           </Card>
         ) : ingredients.length === 0 ? (
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <p className="text-center text-muted-foreground">
                 Nenhum ingrediente cadastrado ainda. Clique no botão + para adicionar seu primeiro ingrediente!
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {ingredients.map((ingredient) => {
               const expiryStatus = getExpiryStatus(ingredient.validade);
               const stockStatus = getStockStatus(ingredient);
@@ -311,10 +311,10 @@ export default function Inventory() {
 
               return (
                 <Card key={ingredient.id} className="card-shadow" data-testid={`card-ingredient-${ingredient.id}`}>
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
+                  <CardContent className="p-3 sm:p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
                       <h4 className="font-semibold text-foreground">{ingredient.nome}</h4>
-                      <div className="flex space-x-1">
+                      <div className="flex flex-wrap gap-1 justify-end">
                         {expiryStatus.status !== 'fresh' && (
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             expiryStatus.color === 'yellow' 
@@ -332,46 +332,46 @@ export default function Inventory() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
                       <div>
                         <span className="text-muted-foreground">Quantidade:</span>
-                        <span className="font-medium ml-1">{ingredient.quantidade} {ingredient.unidade}</span>
+                        <span className="font-medium ml-1 block sm:inline">{ingredient.quantidade} {ingredient.unidade}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Vencimento:</span>
-                        <span className="font-medium ml-1">{formatDate(ingredient.validade)}</span>
+                        <span className="font-medium ml-1 block sm:inline">{formatDate(ingredient.validade)}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Custo/{ingredient.unidade}:</span>
-                        <span className="font-medium ml-1">{formatCurrency(ingredient.custoPorUnidade)}</span>
+                        <span className="font-medium ml-1 block sm:inline">{formatCurrency(ingredient.custoPorUnidade)}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Valor Total:</span>
-                        <span className="font-medium ml-1">{formatCurrency(totalValue)}</span>
+                        <span className="font-medium ml-1 block sm:inline">{formatCurrency(totalValue)}</span>
                       </div>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 text-sm"
                         onClick={() => handleOpenDialog(ingredient)}
                         data-testid={`button-edit-ingredient-${ingredient.id}`}
                         aria-label={`Editar ingrediente ${ingredient.nome}`}
                       >
-                        <Edit size={16} className="mr-1" />
+                        <Edit size={14} className="mr-1" />
                         Editar
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 text-sm"
                         onClick={() => handleDelete(ingredient.id)}
                         data-testid={`button-delete-ingredient-${ingredient.id}`}
                         aria-label={`Excluir ingrediente ${ingredient.nome}`}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </Button>
                     </div>
                   </CardContent>

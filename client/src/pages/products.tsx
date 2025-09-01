@@ -216,7 +216,7 @@ export default function Products() {
     <Layout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <Package className="text-primary" />
             Produtos
           </h1>
@@ -225,11 +225,11 @@ export default function Products() {
         {/* Form */}
         <Card>
           <CardHeader>
-            <CardTitle>{editingId ? 'Editar Produto' : 'Cadastrar Novo Produto'}</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">{editingId ? 'Editar Produto' : 'Cadastrar Novo Produto'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Label htmlFor="nome">Nome do Produto *</Label>
                   <Input
@@ -308,9 +308,9 @@ export default function Products() {
 
               {/* Ingredient Composition */}
               <div className="space-y-4">
-                <h3 className="font-semibold">Composição de Ingredientes</h3>
+                <h3 className="font-semibold text-base">Composição de Ingredientes</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-end">
                   <div>
                     <Label>Ingrediente</Label>
                     <Select value={selectedIngredient} onValueChange={setSelectedIngredient}>
@@ -343,6 +343,7 @@ export default function Products() {
                     type="button"
                     onClick={addIngredientToComposition}
                     data-testid="button-add-ingredient"
+                    className="w-full sm:w-auto"
                   >
                     <Plus size={16} className="mr-1" />
                     Adicionar
@@ -352,10 +353,10 @@ export default function Products() {
                 {/* Ingredient List */}
                 {formData.composicao.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="font-medium">Ingredientes Adicionados:</h4>
+                    <h4 className="font-medium text-sm sm:text-base">Ingredientes Adicionados:</h4>
                     {formData.composicao.map((comp, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span>
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 sm:p-3 rounded">
+                        <span className="text-sm flex-1 pr-2">
                           {getIngredientName(comp.insumoId)} - {comp.quantidadePorUnidade} {getIngredientUnit(comp.insumoId)}
                         </span>
                         <Button
@@ -365,8 +366,9 @@ export default function Products() {
                           onClick={() => removeIngredientFromComposition(comp.insumoId)}
                           data-testid={`button-remove-ingredient-${index}`}
                           aria-label={`Remover ${getIngredientName(comp.insumoId)} da composição`}
+                          className="flex-shrink-0"
                         >
-                          <Minus size={16} />
+                          <Minus size={14} />
                         </Button>
                       </div>
                     ))}
@@ -376,24 +378,24 @@ export default function Products() {
                 {/* Cost Analysis */}
                 {formData.composicao.length > 0 && (
                   <Card className="bg-muted">
-                    <CardContent className="p-4 space-y-2">
+                    <CardContent className="p-3 sm:p-4 space-y-2">
                       <div className="flex items-center gap-2">
-                        <Calculator size={16} />
+                        <Calculator size={14} />
                         <span className="font-medium">Análise de Custos</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span className="text-sm text-muted-foreground">Custo dos ingredientes:</span>
                         <span className="font-semibold" data-testid="text-ingredient-cost">
                           {formatCurrency(productCost)}
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span className="text-sm text-muted-foreground">Preço de venda:</span>
                         <span className="font-semibold" data-testid="text-sale-price">
                           {formatCurrency(parseFloat(formData.precoVenda) || 0)}
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span className="text-sm text-muted-foreground">Margem de lucro:</span>
                         <span className={`font-semibold ${margin < 30 ? 'text-red-600' : margin < 50 ? 'text-yellow-600' : 'text-green-600'}`} data-testid="text-profit-margin">
                           {margin.toFixed(1)}%
@@ -404,7 +406,7 @@ export default function Products() {
                 )}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button type="submit" data-testid="button-save-product">
                   {editingId ? 'Atualizar' : 'Salvar'} Produto
                 </Button>
@@ -421,7 +423,7 @@ export default function Products() {
         {/* Products List */}
         <Card>
           <CardHeader>
-            <CardTitle>Produtos Cadastrados</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Produtos Cadastrados</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -429,11 +431,11 @@ export default function Products() {
             ) : products.length === 0 ? (
               <p className="text-muted-foreground">Nenhum produto cadastrado ainda.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {products.map((product) => (
                   <Card key={product.id} className="border-l-4 border-primary">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-semibold" data-testid={`text-product-name-${product.id}`}>
@@ -448,41 +450,43 @@ export default function Products() {
                           </div>
                           
                           {product.sku && (
-                            <p className="text-sm text-muted-foreground mb-1">SKU: {product.sku}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-1">SKU: {product.sku}</p>
                           )}
                           
                           {product.descricao && (
-                            <p className="text-sm text-muted-foreground mb-2">{product.descricao}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-2">{product.descricao}</p>
                           )}
 
-                          <div className="flex items-center gap-4">
-                            <span className="font-bold text-lg text-primary" data-testid={`text-product-price-${product.id}`}>
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            <span className="font-bold text-base sm:text-lg text-primary" data-testid={`text-product-price-${product.id}`}>
                               {formatCurrency(product.precoVenda)}
                             </span>
                             {product.composicao.length > 0 && (
-                              <span className="text-sm text-muted-foreground">
+                              <span className="text-xs sm:text-sm text-muted-foreground">
                                 {product.composicao.length} ingrediente{product.composicao.length !== 1 ? 's' : ''}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-shrink-0">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(product)}
                             data-testid={`button-edit-${product.id}`}
+                            className="min-w-[44px]"
                           >
-                            <Edit size={16} />
+                            <Edit size={14} />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(product.id)}
                             data-testid={`button-delete-${product.id}`}
+                            className="min-w-[44px]"
                           >
-                            <Trash2 size={16} className="text-red-600" />
+                            <Trash2 size={14} className="text-red-600" />
                           </Button>
                         </div>
                       </div>

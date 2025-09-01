@@ -196,7 +196,7 @@ export default function Customers() {
     <Layout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
             <Users className="text-primary" />
             Clientes
           </h1>
@@ -225,11 +225,11 @@ export default function Customers() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>{editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl">{editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <Label htmlFor="nome">Nome Completo *</Label>
                       <Input
@@ -257,11 +257,11 @@ export default function Customers() {
                   {/* Address Section */}
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
-                      <MapPin size={16} />
+                      <MapPin size={16} className="flex-shrink-0" />
                       Endereço para Entrega
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <Label htmlFor="logradouro">Logradouro</Label>
                         <Input
@@ -343,7 +343,7 @@ export default function Customers() {
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button type="submit" data-testid="button-save-customer">
                       {editingCustomer ? 'Atualizar' : 'Salvar'} Cliente
                     </Button>
@@ -360,7 +360,7 @@ export default function Customers() {
         {/* Customers List */}
         <Card>
           <CardHeader>
-            <CardTitle>Lista de Clientes</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Lista de Clientes</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -368,24 +368,24 @@ export default function Customers() {
             ) : customers.length === 0 ? (
               <p className="text-muted-foreground">Nenhum cliente cadastrado ainda.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {customers.map((customer) => (
                   <Card key={customer.id} className="border-l-4 border-primary">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div className="flex-1">
                           <h3 className="font-semibold mb-1" data-testid={`text-customer-name-${customer.id}`}>
                             {customer.nome}
                           </h3>
                           
-                          <div className="space-y-1 text-sm text-muted-foreground mb-2">
+                          <div className="space-y-1 text-xs sm:text-sm text-muted-foreground mb-2">
                             <p className="flex items-center gap-1">
-                              <MessageCircle size={14} />
+                              <MessageCircle size={12} className="flex-shrink-0" />
                               {formatWhatsApp(customer.whatsapp)}
                             </p>
                             
                             <p className="flex items-center gap-1">
-                              <MapPin size={14} />
+                              <MapPin size={12} className="flex-shrink-0" />
                               {formatAddress(customer.endereco)}
                             </p>
                             
@@ -394,20 +394,21 @@ export default function Customers() {
                             )}
                           </div>
 
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Cliente desde: {new Date(customer.createdAt).toLocaleDateString('pt-BR')}
                           </p>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-shrink-0">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => openWhatsApp(customer.whatsapp, customer.nome)}
                             data-testid={`button-whatsapp-${customer.id}`}
                             aria-label={`Abrir WhatsApp de ${customer.nome}`}
+                            className="min-w-[44px]"
                           >
-                            <MessageCircle size={16} className="text-green-600" />
+                            <MessageCircle size={14} className="text-green-600" />
                           </Button>
                           <Button
                             variant="outline"
@@ -415,8 +416,9 @@ export default function Customers() {
                             onClick={() => handleOpenDialog(customer)}
                             data-testid={`button-edit-${customer.id}`}
                             aria-label={`Editar ${customer.nome}`}
+                            className="min-w-[44px]"
                           >
-                            <Edit size={16} />
+                            <Edit size={14} />
                           </Button>
                           <Button
                             variant="outline"
@@ -424,8 +426,9 @@ export default function Customers() {
                             onClick={() => handleDelete(customer.id)}
                             data-testid={`button-delete-${customer.id}`}
                             aria-label={`Excluir ${customer.nome}`}
+                            className="min-w-[44px]"
                           >
-                            <Trash2 size={16} className="text-red-600" />
+                            <Trash2 size={14} className="text-red-600" />
                           </Button>
                         </div>
                       </div>
