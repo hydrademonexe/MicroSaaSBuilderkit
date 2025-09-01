@@ -214,7 +214,6 @@ export default function Pricing() {
                   </div>
                 )}
               </div>
-              </div>
 
               {/* Results */}
               <Card className="bg-muted">
