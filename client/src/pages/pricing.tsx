@@ -60,7 +60,6 @@ export default function Pricing() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome || !formData.custoInsumos || !formData.rendimento || !formData.margem) {
     if (!formData.nome || formData.custoInsumosCents <= 0 || !formData.rendimento || !formData.margem) {
       toast({
         title: "Erro",
