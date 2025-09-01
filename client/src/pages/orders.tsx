@@ -285,15 +285,15 @@ export default function Orders() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
             <ShoppingBag className="text-primary" />
-            Pedidos
+            Pedidos de Clientes
           </h1>
           <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
-  <DialogTrigger asChild>
-    <Button onClick={() => handleOpenOrderDialog()} data-testid="button-new-order" className="w-full sm:w-auto h-10">
-      <Plus size={16} className="mr-2" /> Novo Pedido
-    </Button>
-  </DialogTrigger>
-  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogTrigger asChild>
+              <Button onClick={() => handleOpenOrderDialog()} data-testid="button-new-order" className="w-full sm:w-auto h-10">
+                <Plus size={16} className="mr-2" /> Novo Pedido
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingOrder ? 'Editar Pedido' : 'Novo Pedido'}</DialogTitle>
               </DialogHeader>
@@ -539,7 +539,7 @@ export default function Orders() {
         {/* Orders List */}
         <Card>
           <CardHeader>
-            <CardTitle>Pedidos</CardTitle>
+            <CardTitle>Pedidos de Clientes</CardTitle>
           </CardHeader>
           <CardContent>
             {ordersLoading ? (

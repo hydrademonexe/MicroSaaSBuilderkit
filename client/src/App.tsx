@@ -9,8 +9,8 @@ import { database } from "@/lib/database";
 // Pages
 import Dashboard from "@/pages/dashboard";
 import Pricing from "@/pages/pricing";
-import Products from "@/pages/products";
 import Orders from "@/pages/orders";
+import Products from "@/pages/products";
 import Inventory from "@/pages/inventory";
 import Customers from "@/pages/customers";
 import Reports from "@/pages/reports";
