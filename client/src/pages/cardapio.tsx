@@ -251,7 +251,7 @@ export default function Cardapio() {
     return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = !categoryFilter || product.category === categoryFilter;
+      const matchesCategory = categoryFilter === 'all-categories' || !categoryFilter || product.category === categoryFilter;
       const matchesStatus = statusFilter === 'all' || 
                            (statusFilter === 'active' && product.isActive) ||
                            (statusFilter === 'inactive' && !product.isActive);
@@ -491,7 +491,7 @@ export default function Cardapio() {
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas</SelectItem>
+                    <SelectItem value="all-categories">Todas</SelectItem>
                     {categories.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
