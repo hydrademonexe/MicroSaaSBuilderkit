@@ -16,6 +16,7 @@ import Customers from "@/pages/customers";
 import Reports from "@/pages/reports";
 import Production from "@/pages/production";
 import ConfigPage from "@/pages/config";
+import Cardapio from "@/pages/cardapio";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/reports" component={Reports} />
       <Route path="/production" component={Production} />
       <Route path="/config" component={ConfigPage} />
+      <Route path="/cardapio" component={Cardapio} />
       <Route component={NotFound} />
     </Switch>
   );

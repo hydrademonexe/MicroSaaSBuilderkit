@@ -1,8 +1,9 @@
 import { Recipe, Ingredient, Customer, Order, Product, StockMovement, Config, ProductionTask, Alert } from '@/types';
+import { ProductCardapio } from '@/types';
 
 class DatabaseManager {
   private dbName = 'lucroAssadoDB';
-  private version = 2; // Updated version to trigger migration
+  private version = 3; // Updated version to trigger migration
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
@@ -89,6 +90,14 @@ class DatabaseManager {
           const alertStore = db.createObjectStore('alerts', { keyPath: 'id' });
           alertStore.createIndex('tipo', 'tipo', { unique: false });
           alertStore.createIndex('data', 'data', { unique: false });
+        }
+
+        // Products Cardapio store
+        if (!db.objectStoreNames.contains('productsCardapio')) {
+          const productStore = db.createObjectStore('productsCardapio', { keyPath: 'id' });
+          productStore.createIndex('name', 'name', { unique: false });
+          productStore.createIndex('category', 'category', { unique: false });
+          productStore.createIndex('isActive', 'isActive', { unique: false });
         }
       };
     });
@@ -549,6 +558,87 @@ class DatabaseManager {
         });
       }
     }
+  }
+
+  // Product Cardapio methods
+  async saveProductCardapio(product: Omit<ProductCardapio, 'id' | 'createdAt' | 'updatedAt'>): Promise<ProductCardapio> {
+    const now = Date.now();
+    const newProduct: ProductCardapio = {
+      ...product,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const store = await this.getStore('productsCardapio', 'readwrite');
+    await new Promise<void>((resolve, reject) => {
+      const request = store.add(newProduct);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+
+    return newProduct;
+  }
+
+  async getProductsCardapio(): Promise<ProductCardapio[]> {
+    const store = await this.getStore('productsCardapio');
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async updateProductCardapio(product: ProductCardapio): Promise<void> {
+    const updatedProduct = { ...product, updatedAt: Date.now() };
+    const store = await this.getStore('productsCardapio', 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.put(updatedProduct);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteProductCardapio(id: string): Promise<void> {
+    const store = await this.getStore('productsCardapio', 'readwrite');
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async duplicateProductCardapio(id: string): Promise<ProductCardapio> {
+    const store = await this.getStore('productsCardapio');
+    const getRequest = store.get(id);
+    
+    return new Promise((resolve, reject) => {
+      getRequest.onsuccess = async () => {
+        const original = getRequest.result;
+        if (original) {
+          const duplicate = {
+            ...original,
+            name: `${original.name} (Cópia)`,
+            id: undefined,
+            createdAt: undefined,
+            updatedAt: undefined
+          };
+          delete duplicate.id;
+          delete duplicate.createdAt;
+          delete duplicate.updatedAt;
+          
+          try {
+            const newProduct = await this.saveProductCardapio(duplicate);
+            resolve(newProduct);
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(new Error('Product not found'));
+        }
+      };
+      getRequest.onerror = () => reject(getRequest.error);
+    });
   }
 
   // Export customers CSV

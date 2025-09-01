@@ -118,3 +118,20 @@ export interface Alert {
   data: Date;
   lida: boolean;
 }
+
+export interface ProductCardapio {
+  id: string;
+  name: string;
+  category?: string;
+  priceCents: number;
+  costCents?: number;
+  marginPct?: number;
+  sku?: string;
+  stockQty?: number;
+  unit?: "un" | "kg" | "dz" | "bandeja" | "pct";
+  isActive: boolean;
+  photoUrl?: string;
+  description?: string;
+  createdAt: number;
+  updatedAt: number;
+}

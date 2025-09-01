@@ -1,4 +1,4 @@
-import { X, Home, Calculator, ShoppingBag, Package, Users, BarChart, Settings, Clock } from "lucide-react";
+import { X, Home, Calculator, ShoppingBag, Package, Users, BarChart, Settings, Clock, MenuBook } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +13,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const menuItems = [
     { path: "/", icon: Home, label: "Dashboard", description: "Visão geral do negócio" },
     { path: "/pricing", icon: Calculator, label: "Precificação", description: "Calcular custos e margens" },
+    { path: "/cardapio", icon: MenuBook, label: "Cardápio", description: "Catálogo de produtos" },
     { path: "/orders", icon: ShoppingBag, label: "Pedidos", description: "Gerenciar pedidos de clientes" },
     { path: "/products", icon: Package, label: "Produtos", description: "Catálogo de produtos" },
     { path: "/inventory", icon: Package, label: "Estoque", description: "Controle de ingredientes" },

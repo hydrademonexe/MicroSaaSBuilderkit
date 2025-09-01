@@ -1,5 +1,4 @@
-import { Home, Calculator, Package, Users, BarChart, Settings } from "lucide-react";
-import { ShoppingBag } from "lucide-react";
+import { Home, Calculator, Package, Users, BarChart, Settings, MenuBook, ShoppingBag } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export function BottomNavigation() {
@@ -8,10 +7,9 @@ export function BottomNavigation() {
   const navItems = [
     { path: "/", icon: Home, label: "Início", testId: "nav-dashboard" },
     { path: "/pricing", icon: Calculator, label: "Preços", testId: "nav-pricing" },
+    { path: "/cardapio", icon: MenuBook, label: "Cardápio", testId: "nav-cardapio" },
     { path: "/orders", icon: ShoppingBag, label: "Pedidos", testId: "nav-orders" },
     { path: "/customers", icon: Users, label: "Clientes", testId: "nav-customers" },
-    { path: "/reports", icon: BarChart, label: "Relatórios", testId: "nav-reports" },
-    { path: "/config", icon: Settings, label: "Config", testId: "nav-config" },
   ];
 
   return (

@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MaskedInput } from "@/components/ui/input-mask";
 import { Trash2, Calculator, Plus, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, validateMargin, calculatePricing, parseCurrency, formatCurrencyInput, formatCurrencyDisplay } from "@/lib/formatters";
+import { validateMargin, calculatePricing } from "@/lib/formatters";
+import { formatCentsToBRL, parseBRLToCents } from "@/lib/money";
+import CurrencyInputBRL from "@/components/ui/currency-input";
 
 export default function Pricing() {
   const { recipes, addRecipe, deleteRecipe, loading } = useRecipes();
@@ -16,7 +17,7 @@ export default function Pricing() {
   
   const [formData, setFormData] = useState({
     nome: '',
-    custoInsumos: '0',
+    custoInsumosCents: 0,
     rendimento: '',
     margem: ''
   });
@@ -38,7 +39,7 @@ export default function Pricing() {
     setFormData(newFormData);
     
     // Calculate in real-time
-    const custoInsumos = parseCurrency(newFormData.custoInsumos || '0');
+    const custoInsumos = (newFormData.custoInsumosCents || 0) / 100;
     const rendimento = parseFloat(newFormData.rendimento) || 1;
     const margem = parseFloat(newFormData.margem) || 0;
     
@@ -60,6 +61,7 @@ export default function Pricing() {
     e.preventDefault();
     
     if (!formData.nome || !formData.custoInsumos || !formData.rendimento || !formData.margem) {
+    if (!formData.nome || formData.custoInsumosCents <= 0 || !formData.rendimento || !formData.margem) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos",
@@ -80,14 +82,14 @@ export default function Pricing() {
     try {
       await addRecipe({
         nome: formData.nome,
-        custoInsumos: parseCurrency(formData.custoInsumos),
+        custoInsumos: formData.custoInsumosCents / 100,
         rendimento: parseFloat(formData.rendimento),
         margem: parseFloat(formData.margem),
         precoSugerido: calculations.precoSugerido,
         lucroUnidade: calculations.lucroUnit
       });
 
-      setFormData({ nome: '', custoInsumos: '0', rendimento: '', margem: '' });
+      setFormData({ nome: '', custoInsumosCents: 0, rendimento: '', margem: '' });
       setCalculations({ custoUnit: 0, precoSugerido: 0, lucroUnit: 0 });
       setMarginValidation({ valid: true });
       
@@ -156,21 +158,11 @@ export default function Pricing() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                 <Label htmlFor="custoInsumos">Custo dos Ingredientes</Label>
-                <Input
+                <CurrencyInputBRL
                   id="custoInsumos"
-                  type="text"
-                  inputMode="decimal"
-                  pattern="[0-9.,]*"
-                  placeholder="15,50"
-                  value={formData.custoInsumos}
-                  onChange={(e) => {
-                    const formatted = formatCurrencyInput(e.target.value);
-                    handleInputChange('custoInsumos', formatted);
-                  }}
-                  onBlur={(e) => {
-                    const formatted = formatCurrencyDisplay(e.target.value);
-                    handleInputChange('custoInsumos', formatted);
-                  }}
+                  valueCents={formData.custoInsumosCents}
+                  onChange={(cents) => handleInputChange('custoInsumosCents', cents)}
+                  required
                   data-testid="input-ingredient-cost"
                 />
               </div>
@@ -221,19 +213,19 @@ export default function Pricing() {
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Custo por unidade:</span>
                     <span className="font-semibold" data-testid="text-cost-per-unit">
-                      {formatCurrency(calculations.custoUnit)}
+                      {formatCentsToBRL(Math.round(calculations.custoUnit * 100))}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Preço sugerido:</span>
                     <span className="font-bold text-lg text-primary" data-testid="text-suggested-price">
-                      {formatCurrency(calculations.precoSugerido)}
+                      {formatCentsToBRL(Math.round(calculations.precoSugerido * 100))}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Lucro por unidade:</span>
                     <span className="font-semibold text-green-600" data-testid="text-profit-per-unit">
-                      {formatCurrency(calculations.lucroUnit)}
+                      {formatCentsToBRL(Math.round(calculations.lucroUnit * 100))}
                     </span>
                   </div>
                 </CardContent>
@@ -289,7 +281,7 @@ export default function Pricing() {
                     <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mb-2 sm:mb-3">
                       <div>
                         <span className="text-muted-foreground">Custo total:</span>
-                        <span className="font-medium ml-1 block sm:inline">{formatCurrency(recipe.custoInsumos)}</span>
+                        <span className="font-medium ml-1 block sm:inline">{formatCentsToBRL(Math.round(recipe.custoInsumos * 100))}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Rendimento:</span>
@@ -301,14 +293,14 @@ export default function Pricing() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Lucro/unidade:</span>
-                        <span className="font-medium ml-1 text-green-600 block sm:inline">{formatCurrency(recipe.lucroUnidade)}</span>
+                        <span className="font-medium ml-1 text-green-600 block sm:inline">{formatCentsToBRL(Math.round(recipe.lucroUnidade * 100))}</span>
                       </div>
                     </div>
                     
                     <div className="bg-primary/10 rounded-lg p-2 sm:p-3">
                       <div className="flex justify-between items-center">
                         <span className="text-xs sm:text-sm font-medium text-foreground">Preço de Venda:</span>
-                        <span className="text-base sm:text-lg font-bold text-primary">{formatCurrency(recipe.precoSugerido)}</span>
+                        <span className="text-base sm:text-lg font-bold text-primary">{formatCentsToBRL(Math.round(recipe.precoSugerido * 100))}</span>
                       </div>
                     </div>
                   </CardContent>

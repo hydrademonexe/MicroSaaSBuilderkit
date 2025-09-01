@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { database } from '@/lib/database';
-import { Recipe, Ingredient, Customer, Order, Product, ProductionTask, Alert } from '@/types';
+import { Recipe, Ingredient, Customer, Order, Product, ProductionTask, Alert, ProductCardapio } from '@/types';
 
 export function useRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -352,4 +352,68 @@ export function useProductionTasks() {
   };
 
   return { tasks, loading, updateTask, addTask, deleteTask, reload: loadTasks };
+}
+
+export function useProductsCardapio() {
+  const [products, setProducts] = useState<ProductCardapio[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadProducts = async () => {
+    try {
+      const data = await database.getProductsCardapio();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error loading products cardapio:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const addProduct = async (product: Omit<ProductCardapio, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const newProduct = await database.saveProductCardapio(product);
+      setProducts(prev => [...prev, newProduct]);
+      return newProduct;
+    } catch (error) {
+      console.error('Error adding product:', error);
+      throw error;
+    }
+  };
+
+  const updateProduct = async (product: ProductCardapio) => {
+    try {
+      await database.updateProductCardapio(product);
+      setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    try {
+      await database.deleteProductCardapio(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+  };
+
+  const duplicateProduct = async (id: string) => {
+    try {
+      const newProduct = await database.duplicateProductCardapio(id);
+      setProducts(prev => [...prev, newProduct]);
+      return newProduct;
+    } catch (error) {
+      console.error('Error duplicating product:', error);
+      throw error;
+    }
+  };
+
+  return { products, loading, addProduct, updateProduct, deleteProduct, duplicateProduct, reload: loadProducts };
 }
