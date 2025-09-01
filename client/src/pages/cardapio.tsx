@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { MenuBook, Plus, Edit, Copy, Archive, ArchiveRestore, Trash2, Search, Filter, Image } from "lucide-react";
+import { BookOpen, Plus, Edit, Copy, Archive, ArchiveRestore, Trash2, Search, Filter, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCentsToBRL } from "@/lib/money";
 import CurrencyInputBRL from "@/components/ui/currency-input";
@@ -273,7 +273,7 @@ export default function Cardapio() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
-            <MenuBook className="text-primary" />
+            <BookOpen className="text-primary" />
             Cardápio
           </h1>
           
