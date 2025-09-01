@@ -108,13 +108,13 @@ export function validateMargin(marginPercent: number): { valid: boolean; warning
  * calculatePricing:
  * Given ingredient cost, yield and desired margin %, returns pricing calculations.
  */
-export function calculatePricing(ingredientCost: number, yield: number, marginPercent: number): {
+export function calculatePricing(ingredientCost: number, unitsProduced: number, marginPercent: number): {
   custoUnit: number;
   precoSugerido: number;
   lucroUnit: number;
 } {
   const cost = Number.isFinite(ingredientCost) ? ingredientCost : 0;
-  const units = Number.isFinite(yield) && yield > 0 ? yield : 1;
+  const units = Number.isFinite(unitsProduced) && unitsProduced > 0 ? unitsProduced : 1;
   const margin = Math.max(0, Math.min(300, marginPercent));
   
   const custoUnit = Number((cost / units).toFixed(2));
