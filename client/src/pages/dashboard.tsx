@@ -205,6 +205,20 @@ export default function Dashboard() {
               </Card>
             </Link>
 
+            <Link href="/orders">
+              <Card className="touch-target card-shadow">
+                <CardContent className="p-3 sm:p-4 flex items-center space-x-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-shopping-bag text-orange-600 text-base sm:text-lg"></i>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground text-sm sm:text-base leading-tight">Pedidos</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Gerenciar vendas</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
             <Link href="/inventory">
               <Card className="touch-target card-shadow">
                 <CardContent className="p-3 sm:p-4 flex items-center space-x-3">
@@ -260,23 +274,9 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </Link>
-                </CardContent>
-              </Card>
-            </Link>
           </div>
         </section>
       </div>
     </Layout>
   );
 }
-
-            <Link href="/orders">
-              <Card className="touch-target card-shadow">
-                <CardContent className="p-3 sm:p-4 flex items-center space-x-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i className="fas fa-shopping-bag text-orange-600 text-base sm:text-lg"></i>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground text-sm sm:text-base leading-tight">Pedidos</h4>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Gerenciar vendas</p>
-                  </div>
